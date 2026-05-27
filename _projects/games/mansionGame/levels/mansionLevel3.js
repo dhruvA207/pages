@@ -36,6 +36,11 @@ class MansionLevel3 {
         this.lockedPromptVisible = false;
         this.mainPromptEl        = null;
         this.lockedPromptEl      = null;
+        this.spriteMenuVisible   = false;
+        this.spriteMenuEl        = null;
+        this.spriteHintEl        = null;
+        this.spriteButtonGrid    = null;
+        this.currentSpriteIndex  = 0;
 
         // Casino background (same sprite as level 4)
         const image_data_background = {
@@ -67,6 +72,57 @@ class MansionLevel3 {
             hitbox: { widthPercentage: 0.45, heightPercentage: 0.2 },
             keypress: { up: 87, left: 65, down: 83, right: 68 }
         };
+
+        this.spriteOptions = [
+            {
+                label: 'Spook',
+                src: path + "/images/projects/mansionGame/spookMcWalk.png",
+                pixels: { height: 2400, width: 3600 },
+                SCALE_FACTOR: 6,
+                ANIMATION_RATE: 10,
+                orientation: { rows: 2, columns: 3 },
+                down:      { row: 1, start: 0, columns: 3 },
+                downRight: { row: 1, start: 0, columns: 3, rotate:  Math.PI / 16 },
+                downLeft:  { row: 0, start: 0, columns: 3, rotate: -Math.PI / 16 },
+                left:      { row: 0, start: 0, columns: 3 },
+                right:     { row: 1, start: 0, columns: 3 },
+                up:        { row: 1, start: 0, columns: 3 },
+                upLeft:    { row: 0, start: 0, columns: 3, rotate:  Math.PI / 16 },
+                upRight:   { row: 1, start: 0, columns: 3, rotate: -Math.PI / 16 }
+            },
+            {
+                label: 'Mummy Boy',
+                src: path + "/images/projects/mansionGame/mummy_boy.png",
+                pixels: { height: 192, width: 144 },
+                SCALE_FACTOR: 6,
+                ANIMATION_RATE: 12,
+                orientation: { rows: 4, columns: 3 },
+                down:      { row: 0, start: 0, columns: 3 },
+                downRight: { row: 0, start: 0, columns: 3 },
+                downLeft:  { row: 0, start: 0, columns: 3 },
+                left:      { row: 1, start: 0, columns: 3 },
+                right:     { row: 2, start: 0, columns: 3 },
+                up:        { row: 3, start: 0, columns: 3 },
+                upLeft:    { row: 1, start: 0, columns: 3 },
+                upRight:   { row: 2, start: 0, columns: 3 }
+            },
+            {
+                label: 'Ghost Runner',
+                src: path + "/images/projects/mansionGame/full_anims_spook.png",
+                pixels: { width: 1500, height: 120 },
+                SCALE_FACTOR: 5,
+                ANIMATION_RATE: 20,
+                orientation: { rows: 2, columns: 25 },
+                down:      { row: 1, start: 0, columns: 3 },
+                downRight: { row: 1, start: 0, columns: 3, mirror: true, rotate: Math.PI / 16 },
+                downLeft:  { row: 1, start: 0, columns: 3, rotate: -Math.PI / 16 },
+                left:      { row: 1, start: 0, columns: 3 },
+                right:     { row: 1, start: 0, columns: 3, mirror: true },
+                up:        { row: 1, start: 0, columns: 3 },
+                upLeft:    { row: 0, start: 0, columns: 3, rotate: Math.PI / 16 },
+                upRight:   { row: 1, start: 0, columns: 3, mirror: true, rotate: -Math.PI / 16 }
+            }
+        ];
 
         // Main (center spotlight) table trigger zone
         const mainZoneData = {
@@ -133,18 +189,226 @@ class MansionLevel3 {
         this.backgroundMusic.volume = 0.3;
         this.backgroundMusic.play().catch(() => {});
 
+        this.createSpriteMenu();
         this.setupKeyListener();
         console.log("✅ MansionLevel3 (casino) constructor completed");
     }
 
     setupKeyListener() {
         this.keyHandler = (e) => {
+            if (e.key && e.key.toLowerCase() === 'q') {
+                e.preventDefault();
+                this.toggleSpriteMenu();
+                return;
+            }
+
             if (e.keyCode === 69 && this.inMainZone && !this.blackjackManager.gameActive) {
                 this.blackjackManager.startGame();
                 this.hideMainPrompt();
             }
         };
         document.addEventListener('keydown', this.keyHandler);
+    }
+
+    getPlayer() {
+        return this.gameEnv?.gameObjects?.find((obj) => obj instanceof Player) || null;
+    }
+
+    applySpriteOption(spriteOption) {
+        const player = this.getPlayer();
+        if (!player || !spriteOption) return;
+
+        this.currentSpriteIndex = this.spriteOptions.findIndex((option) => option.label === spriteOption.label);
+        if (this.currentSpriteIndex < 0) {
+            this.currentSpriteIndex = 0;
+        }
+
+        player.data.src = spriteOption.src;
+        player.data.pixels = { ...spriteOption.pixels };
+        player.data.SCALE_FACTOR = spriteOption.SCALE_FACTOR;
+        player.data.ANIMATION_RATE = spriteOption.ANIMATION_RATE;
+        player.data.orientation = { ...spriteOption.orientation };
+
+        [
+            'down',
+            'downRight',
+            'downLeft',
+            'left',
+            'right',
+            'up',
+            'upLeft',
+            'upRight'
+        ].forEach((direction) => {
+            player.data[direction] = spriteOption[direction]
+                ? { ...spriteOption[direction] }
+                : { row: 0, start: 0, columns: 1 };
+        });
+
+        player.spriteData = player.data;
+        player.scaleFactor = spriteOption.SCALE_FACTOR;
+        player.animationRate = spriteOption.ANIMATION_RATE;
+        player.frameIndex = 0;
+        player.frameCounter = 0;
+        player.direction = 'down';
+        player.resize();
+
+        if (!player.spriteSheet) {
+            player.spriteSheet = new Image();
+        }
+
+        player.spriteReady = false;
+        player.spriteSheet.onload = () => {
+            player.spriteReady = true;
+            player.resize();
+        };
+        player.spriteSheet.src = spriteOption.src;
+
+        this.refreshSpriteMenuButtons();
+    }
+
+    createSpriteMenu() {
+        this.removeSpriteMenu();
+
+        this.spriteMenuEl = document.createElement('div');
+        this.spriteMenuEl.id = 'mansion-level3-sprite-menu';
+        this.spriteMenuEl.style.cssText = `
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            min-width: 300px;
+            padding: 20px;
+            border-radius: 16px;
+            background: rgba(10, 4, 24, 0.95);
+            border: 2px solid ${HEX.purple};
+            color: ${HEX.ghostWhite};
+            font-family: monospace;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.45);
+            z-index: 10000;
+            display: none;
+        `;
+
+        const menuTitle = document.createElement('div');
+        menuTitle.textContent = 'Choose your haunted sprite';
+        menuTitle.style.cssText = `
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 8px;
+            color: ${HEX.ghostWhite};
+        `;
+
+        const menuText = document.createElement('div');
+        menuText.textContent = 'Press Q to close, or click a character below.';
+        menuText.style.cssText = `
+            font-size: 12px;
+            margin-bottom: 14px;
+            color: #cbb7ff;
+        `;
+
+        this.spriteButtonGrid = document.createElement('div');
+        this.spriteButtonGrid.style.cssText = `
+            display: grid;
+            grid-template-columns: repeat(2, minmax(120px, 1fr));
+            gap: 10px;
+        `;
+
+        this.spriteOptions.forEach((option) => {
+            const button = document.createElement('button');
+            button.type = 'button';
+            button.textContent = option.label;
+            button.dataset.spriteLabel = option.label;
+            button.style.cssText = `
+                padding: 10px 12px;
+                border-radius: 10px;
+                border: 1px solid ${HEX.purple};
+                background: #24113f;
+                color: ${HEX.ghostWhite};
+                cursor: pointer;
+                font-family: monospace;
+                font-size: 13px;
+            `;
+
+            button.addEventListener('click', () => {
+                this.applySpriteOption(option);
+                this.hideSpriteMenu();
+            });
+
+            this.spriteButtonGrid.appendChild(button);
+        });
+
+        this.spriteMenuEl.appendChild(menuTitle);
+        this.spriteMenuEl.appendChild(menuText);
+        this.spriteMenuEl.appendChild(this.spriteButtonGrid);
+        document.body.appendChild(this.spriteMenuEl);
+
+        this.spriteHintEl = document.createElement('div');
+        this.spriteHintEl.id = 'mansion-level3-sprite-hint';
+        this.spriteHintEl.textContent = 'Press Q to swap characters';
+        this.spriteHintEl.style.cssText = `
+            position: fixed;
+            left: 16px;
+            bottom: 16px;
+            padding: 8px 12px;
+            border-radius: 999px;
+            background: rgba(10, 4, 24, 0.88);
+            color: ${HEX.ghostWhite};
+            font-family: monospace;
+            font-size: 12px;
+            z-index: 9998;
+            border: 1px solid rgba(107, 10, 201, 0.85);
+        `;
+        document.body.appendChild(this.spriteHintEl);
+
+        this.refreshSpriteMenuButtons();
+    }
+
+    refreshSpriteMenuButtons() {
+        if (!this.spriteButtonGrid) return;
+
+        Array.from(this.spriteButtonGrid.children).forEach((button, index) => {
+            const isActive = index === this.currentSpriteIndex;
+            button.style.background = isActive ? HEX.green : '#24113f';
+            button.style.color = isActive ? '#04110a' : HEX.ghostWhite;
+            button.style.borderColor = isActive ? HEX.green : HEX.purple;
+        });
+    }
+
+    toggleSpriteMenu() {
+        if (this.spriteMenuVisible) {
+            this.hideSpriteMenu();
+            return;
+        }
+
+        this.showSpriteMenu();
+    }
+
+    showSpriteMenu() {
+        if (!this.spriteMenuEl) return;
+        this.spriteMenuVisible = true;
+        this.refreshSpriteMenuButtons();
+        this.spriteMenuEl.style.display = 'block';
+    }
+
+    hideSpriteMenu() {
+        if (!this.spriteMenuEl) return;
+        this.spriteMenuVisible = false;
+        this.spriteMenuEl.style.display = 'none';
+    }
+
+    removeSpriteMenu() {
+        this.spriteMenuVisible = false;
+
+        if (this.spriteMenuEl?.parentNode) {
+            this.spriteMenuEl.parentNode.removeChild(this.spriteMenuEl);
+        }
+
+        if (this.spriteHintEl?.parentNode) {
+            this.spriteHintEl.parentNode.removeChild(this.spriteHintEl);
+        }
+
+        this.spriteMenuEl = null;
+        this.spriteHintEl = null;
+        this.spriteButtonGrid = null;
     }
 
     // ─── Main table prompt ────────────────────────────────────────────────────
@@ -313,6 +577,7 @@ class MansionLevel3 {
         document.removeEventListener('keydown', this.keyHandler);
         this.hideMainPrompt();
         this.hideLockedPrompt();
+        this.removeSpriteMenu();
         if (this.backgroundMusic) {
             this.backgroundMusic.pause();
             this.backgroundMusic.currentTime = 0;
