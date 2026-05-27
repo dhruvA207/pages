@@ -168,6 +168,13 @@ class MansionLevel3 {
             onExit:  () => this.hideLockedPrompt()
         }));
 
+        this.tableCollisionZones = lockedZoneConfigs.map((cfg) => ({
+            x: cfg.x + (cfg.w * 0.22),
+            y: cfg.y + (cfg.h * 0.22),
+            width: cfg.w * 0.56,
+            height: cfg.h * 0.38
+        }));
+
         const barrierData = [
             { x: 0,          y: 0,           width: width, height: 20,    visible: false },
             { x: 0,          y: height - 20, width: width, height: 20,    visible: false },
@@ -519,9 +526,54 @@ class MansionLevel3 {
         this.lockedPromptEl = null;
     }
 
+    enforceTableCollisions() {
+        const player = this.getPlayer();
+        if (!player || !this.tableCollisionZones?.length) return;
+
+        const hitboxWidthPercent = (player.hitbox && player.hitbox.widthPercentage) || 1;
+        const hitboxHeightPercent = (player.hitbox && player.hitbox.heightPercentage) || 1;
+        const hitboxWidth = player.width * hitboxWidthPercent;
+        const hitboxHeight = player.height * hitboxHeightPercent;
+        const hitboxX = player.position.x + (player.width - hitboxWidth) / 2;
+        const hitboxY = player.position.y + (player.height - hitboxHeight);
+
+        for (const zone of this.tableCollisionZones) {
+            const isColliding = !(
+                hitboxX > zone.x + zone.width ||
+                hitboxX + hitboxWidth < zone.x ||
+                hitboxY > zone.y + zone.height ||
+                hitboxY + hitboxHeight < zone.y
+            );
+
+            if (!isColliding) continue;
+
+            const overlapLeft = (hitboxX + hitboxWidth) - zone.x;
+            const overlapRight = (zone.x + zone.width) - hitboxX;
+            const overlapTop = (hitboxY + hitboxHeight) - zone.y;
+            const overlapBottom = (zone.y + zone.height) - hitboxY;
+            const minOverlap = Math.min(overlapLeft, overlapRight, overlapTop, overlapBottom);
+
+            if (minOverlap === overlapLeft) {
+                player.position.x -= overlapLeft;
+                if (player.velocity) player.velocity.x = Math.min(0, player.velocity.x || 0);
+            } else if (minOverlap === overlapRight) {
+                player.position.x += overlapRight;
+                if (player.velocity) player.velocity.x = Math.max(0, player.velocity.x || 0);
+            } else if (minOverlap === overlapTop) {
+                player.position.y -= overlapTop;
+                if (player.velocity) player.velocity.y = Math.min(0, player.velocity.y || 0);
+            } else {
+                player.position.y += overlapBottom;
+                if (player.velocity) player.velocity.y = Math.max(0, player.velocity.y || 0);
+            }
+        }
+    }
+
     // ─── Level lifecycle ──────────────────────────────────────────────────────
 
     update() {
+        this.enforceTableCollisions();
+
         // Re-hide main prompt if blackjack became active
         if (this.blackjackManager.gameActive && this.mainPromptVisible) {
             this.hideMainPrompt();
