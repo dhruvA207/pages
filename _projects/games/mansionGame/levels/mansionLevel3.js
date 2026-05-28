@@ -418,8 +418,65 @@ class MansionLevel3 {
         this.spriteButtonGrid = null;
     }
 
-    // TODO: Part 3 (Main table prompt) — Group Member 3
-    // showMainPrompt(), hideMainPrompt()
+    // ─── Main table prompt ────────────────────────────────────────────────────
+
+    showMainPrompt() {
+        if (this.mainPromptVisible || this.blackjackManager.gameActive) return;
+        this.mainPromptVisible = true;
+
+        this.mainPromptEl = document.createElement('div');
+        this.mainPromptEl.id = 'casino-prompt-l3';
+        this.mainPromptEl.style.cssText = `
+            position: fixed;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(5, 0, 18, 0.95);
+            border: 3px solid ${HEX.purple};
+            border-radius: 15px;
+            padding: 30px 50px;
+            z-index: 9999;
+            text-align: center;
+            animation: l3BorderCycle 3s infinite;
+        `;
+
+        this.mainPromptEl.innerHTML = `
+            <style>
+                @keyframes l3BorderCycle {
+                    0%   { box-shadow: 0 0 30px ${HEX.purple}, 0 0 60px rgba(107,10,201,0.35); border-color: ${HEX.purple}; }
+                    33%  { box-shadow: 0 0 30px ${HEX.blood},  0 0 60px rgba(139,0,0,0.35);   border-color: ${HEX.blood};  }
+                    66%  { box-shadow: 0 0 30px ${HEX.green},  0 0 60px rgba(0,204,68,0.35);  border-color: ${HEX.green};  }
+                    100% { box-shadow: 0 0 30px ${HEX.purple}, 0 0 60px rgba(107,10,201,0.35); border-color: ${HEX.purple}; }
+                }
+            </style>
+            <div style="font-size:52px; margin-bottom:12px;">🎰</div>
+            <h2 style="color:${HEX.purple}; font-size:30px; margin:0 0 12px 0;
+                       text-shadow:0 0 12px ${HEX.purple};">HAUNTED BLACKJACK</h2>
+            <p style="color:${HEX.ghostWhite}; font-size:18px; margin:8px 0;">
+                Win <strong style="color:${HEX.green};">$10,000</strong> to escape the cursed casino!
+            </p>
+            <p style="color:#aaa; font-size:14px; margin:4px 0;">
+                Split • Double Down • Insurance • Natural BJ pays 3:2
+            </p>
+            <div style="margin-top:22px; padding:14px 20px;
+                        background: linear-gradient(135deg, ${HEX.purple}, ${HEX.blood});
+                        border-radius:10px;">
+                <p style="color:white; font-size:22px; margin:0; font-weight:bold;">
+                    Press <kbd style="background:#000;border:1px solid #fff;padding:2px 8px;border-radius:4px;">E</kbd> to Enter
+                </p>
+            </div>
+        `;
+
+        document.body.appendChild(this.mainPromptEl);
+    }
+
+    hideMainPrompt() {
+        if (!this.mainPromptVisible) return;
+        this.mainPromptVisible = false;
+        if (this.mainPromptEl && this.mainPromptEl.parentNode) {
+            this.mainPromptEl.parentNode.removeChild(this.mainPromptEl);
+        }
+        this.mainPromptEl = null;
+    }
 
     // ─── Locked table prompt ──────────────────────────────────────────────────
 
@@ -571,7 +628,7 @@ class MansionLevel3 {
         console.log("🧹 MansionLevel3 cleanup...");
         document.removeEventListener('keydown', this.keyHandler);
         this.hideMainPrompt();
-        // TODO: Part 2 (Locked side tables cleanup — hideLockedPrompt call) — Group Member 2
+        this.hideLockedPrompt();
         this.removeSpriteMenu();
         if (this.backgroundMusic) {
             this.backgroundMusic.pause();
