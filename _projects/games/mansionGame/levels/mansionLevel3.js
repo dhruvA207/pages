@@ -142,7 +142,38 @@ class MansionLevel3 {
             }
         };
 
-        // TODO: Part 2 (Locked side tables — lockedMessages, lockedZoneConfigs, lockedZones, tableCollisionZones) — Group Member 2
+        // Locked side tables (4 outer tables visible in the sprite)
+        const lockedMessages = [
+            "👻 The ghost dealer isn't at this table right now!",
+            "🦇 The bats have claimed this table for the night!",
+            "🕸️ This table is tangled in cobwebs — come back never!",
+            "☠️ The skeleton croupier called in sick. Table closed!"
+        ];
+
+        // Positions estimated from image_lvl4.png layout:
+        //  upper-left, upper-right, lower-left, lower-right
+        const lockedZoneConfigs = [
+            { x: width * 0.02, y: height * 0.04, w: width * 0.25, h: height * 0.42, msg: lockedMessages[0] },
+            { x: width * 0.68, y: height * 0.04, w: width * 0.25, h: height * 0.42, msg: lockedMessages[1] },
+            { x: width * 0.02, y: height * 0.53, w: width * 0.25, h: height * 0.42, msg: lockedMessages[2] },
+            { x: width * 0.68, y: height * 0.53, w: width * 0.25, h: height * 0.42, msg: lockedMessages[3] },
+        ];
+
+        const lockedZones = lockedZoneConfigs.map(cfg => ({
+            x: cfg.x, y: cfg.y,
+            width: cfg.w, height: cfg.h,
+            color: 'rgba(139, 0, 0, 0.08)',
+            visible: false,
+            onEnter: () => this.showLockedPrompt(cfg.msg),
+            onExit:  () => this.hideLockedPrompt()
+        }));
+
+        this.tableCollisionZones = lockedZoneConfigs.map((cfg) => ({
+            x: cfg.x + (cfg.w * 0.22),
+            y: cfg.y + (cfg.h * 0.22),
+            width: cfg.w * 0.56,
+            height: cfg.h * 0.38
+        }));
 
         const barrierData = [
             { x: 0,          y: 0,           width: width, height: 20,    visible: false },
@@ -155,7 +186,7 @@ class MansionLevel3 {
             { class: GameEnvBackground, data: image_data_background },
             { class: Player,            data: sprite_data_mc },
             { class: TriggerZone,       data: mainZoneData },
-            // TODO: Part 2 (Locked side tables — lockedZones spread) — Group Member 2
+            ...lockedZones.map(data => ({ class: TriggerZone, data })),
             ...barrierData.map(data  => ({ class: Barrier,    data }))
         ];
 
@@ -447,8 +478,53 @@ class MansionLevel3 {
         this.mainPromptEl = null;
     }
 
-    // TODO: Part 2 (Locked side tables) — Group Member 2
-    // showLockedPrompt(message), hideLockedPrompt()
+    // ─── Locked table prompt ──────────────────────────────────────────────────
+
+    showLockedPrompt(message) {
+        if (this.lockedPromptVisible) return;
+        this.lockedPromptVisible = true;
+
+        this.lockedPromptEl = document.createElement('div');
+        this.lockedPromptEl.id = 'locked-table-prompt-l3';
+        this.lockedPromptEl.style.cssText = `
+            position: fixed;
+            top: 38%; left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(5, 0, 18, 0.95);
+            border: 3px solid ${HEX.blood};
+            border-radius: 15px;
+            padding: 25px 40px;
+            z-index: 9999;
+            text-align: center;
+            box-shadow: 0 0 30px ${HEX.blood}, 0 0 60px rgba(139,0,0,0.3);
+            animation: l3LockedPulse 2s infinite;
+        `;
+
+        this.lockedPromptEl.innerHTML = `
+            <style>
+                @keyframes l3LockedPulse {
+                    0%,100% { box-shadow: 0 0 25px ${HEX.blood};  }
+                    50%     { box-shadow: 0 0 45px ${HEX.magenta}; }
+                }
+            </style>
+            <div style="font-size:44px; margin-bottom:10px;">⛔</div>
+            <h3 style="color:${HEX.blood}; font-size:24px; margin:0 0 10px 0;
+                       text-shadow:0 0 8px ${HEX.blood};">TABLE CLOSED</h3>
+            <p style="color:${HEX.ghostWhite}; font-size:17px; margin:0 0 10px 0;">${message}</p>
+            <p style="color:#888; font-size:13px; margin:0;">Walk away to dismiss</p>
+        `;
+
+        document.body.appendChild(this.lockedPromptEl);
+    }
+
+    hideLockedPrompt() {
+        if (!this.lockedPromptVisible) return;
+        this.lockedPromptVisible = false;
+        if (this.lockedPromptEl && this.lockedPromptEl.parentNode) {
+            this.lockedPromptEl.parentNode.removeChild(this.lockedPromptEl);
+        }
+        this.lockedPromptEl = null;
+    }
 
     enforceTableCollisions() {
         const player = this.getPlayer();
@@ -552,7 +628,7 @@ class MansionLevel3 {
         console.log("🧹 MansionLevel3 cleanup...");
         document.removeEventListener('keydown', this.keyHandler);
         this.hideMainPrompt();
-        // TODO: Part 2 (Locked side tables cleanup — hideLockedPrompt call) — Group Member 2
+        this.hideLockedPrompt();
         this.removeSpriteMenu();
         if (this.backgroundMusic) {
             this.backgroundMusic.pause();
