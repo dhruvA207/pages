@@ -1,3 +1,4 @@
+// ...existing code...
 // Blackjack.js — Full Blackjack: Split, Double Down, Insurance, Natural BJ (3:2), Halloween theme
 
 class BlackjackGameManager {
@@ -9,16 +10,19 @@ class BlackjackGameManager {
         this.gameActive   = false;
         this.overlay      = null;
         this.roundInProgress = false;
-        this.onWin        = null;
+        this.onWin        = null; // callback set by the level
+        // additions from merged branch
         this.achievements = new Set();
         this.winStreak    = 0;
     }
+
 
     startGame() {
         if (this.gameActive) return;
         this.gameActive = true;
         this.createOverlay();
     }
+
 
     createOverlay() {
         this.overlay = document.createElement('div');
@@ -34,10 +38,12 @@ class BlackjackGameManager {
             opacity: 0; transition: opacity 0.8s ease-in-out;
         `;
 
+
         if (this.gameEnv && this.gameEnv.canvas) {
             this.gameEnv.canvas.style.transition = 'opacity 0.8s ease-in-out';
             this.gameEnv.canvas.style.opacity = '0';
         }
+
 
         const gameContainer = document.createElement('div');
         gameContainer.id = 'embedded-blackjack';
@@ -48,6 +54,7 @@ class BlackjackGameManager {
             box-shadow: 0 0 50px rgba(107, 10, 201, 0.5);
         `;
 
+
         const moneyDisplay = document.createElement('div');
         moneyDisplay.id = 'money-display';
         moneyDisplay.style.cssText = `
@@ -55,6 +62,7 @@ class BlackjackGameManager {
             text-align: center; margin-bottom: 16px;
         `;
         moneyDisplay.innerHTML = `Current Money: $${this.money} | Goal: $${this.goalMoney}`;
+
 
         const instructions = document.createElement('div');
         instructions.style.cssText = `
@@ -72,15 +80,18 @@ class BlackjackGameManager {
             </span>
         `;
 
+
         gameContainer.appendChild(moneyDisplay);
         gameContainer.appendChild(instructions);
         this.overlay.appendChild(this.createParallaxBackground());
         this.overlay.appendChild(gameContainer);
         document.body.appendChild(this.overlay);
 
+
         setTimeout(() => { this.overlay.style.opacity = '1'; }, 50);
         this.loadBlackjackHTML(gameContainer);
     }
+
 
     createParallaxBackground() {
         const style = document.createElement('style');
@@ -102,6 +113,7 @@ class BlackjackGameManager {
         document.head.appendChild(style);
         this._parallaxStyle = style;
 
+
         const container = document.createElement('div');
         container.style.cssText = `
             position: absolute; top: 0; left: 0;
@@ -109,12 +121,14 @@ class BlackjackGameManager {
             overflow: hidden; pointer-events: none; z-index: 0;
         `;
 
+
         const layers = [
             { count: 7,  fontSize: 52, opacity: 0.030, duration: 24, anim: 'bjDrift0' },
             { count: 13, fontSize: 30, opacity: 0.055, duration: 15, anim: 'bjDrift1' },
             { count: 20, fontSize: 17, opacity: 0.085, duration: 9,  anim: 'bjDrift2' },
         ];
         const suits = ['♠', '♥', '♦', '♣'];
+
 
         layers.forEach(layer => {
             for (let i = 0; i < layer.count; i++) {
@@ -136,8 +150,10 @@ class BlackjackGameManager {
             }
         });
 
+
         return container;
     }
+
 
     updateMoneyDisplay() {
         const el = document.getElementById('money-display');
@@ -150,6 +166,7 @@ class BlackjackGameManager {
             <span style="color:#e0c0ff;">Goal: $${this.goalMoney}</span>
         `;
     }
+
 
     loadBlackjackHTML(container) {
         container.innerHTML += `
@@ -191,6 +208,7 @@ class BlackjackGameManager {
                 #embedded-blackjack .bj-btn:disabled { opacity:0.28; cursor:not-allowed; transform:none; }
             </style>
 
+
             <!-- ── Help modal ── -->
             <div id="bj-help-modal" style="
                 display:none; position:fixed; top:0; left:0; width:100%; height:100%;
@@ -212,35 +230,49 @@ class BlackjackGameManager {
                             ✕ Close
                         </button>
                     </div>
+
+
                     <div style="color:#ccc;font-size:14px;line-height:1.7;">
+
+
                         <p style="color:#00cc44;font-weight:bold;font-size:15px;margin:0 0 6px 0;">🎯 Goal</p>
                         <p style="margin:0 0 14px 0;">
                             Beat the dealer by getting closer to <strong style="color:white;">21</strong> without going over.
                             Start with <strong style="color:#00cc44;">$1,000</strong> and reach
                             <strong style="color:#ffcc00;">$10,000</strong> to escape the casino!
                         </p>
+
+
                         <p style="color:#cc99ff;font-weight:bold;font-size:15px;margin:0 0 6px 0;">🂡 Card Values</p>
                         <ul style="margin:0 0 14px 0;padding-left:18px;">
                             <li><strong style="color:white;">2–10</strong> — face value</li>
                             <li><strong style="color:white;">J, Q, K</strong> — worth 10</li>
                             <li><strong style="color:white;">Ace (A)</strong> — worth 11, drops to 1 if you'd bust</li>
                         </ul>
+
+
                         <p style="color:#cc99ff;font-weight:bold;font-size:15px;margin:0 0 6px 0;">🕹️ Basic Actions</p>
                         <ul style="margin:0 0 14px 0;padding-left:18px;">
                             <li><strong style="color:#00cc44;">Hit</strong> — take another card</li>
                             <li><strong style="color:#8b0000;">Stand</strong> — keep your hand; dealer plays</li>
                         </ul>
+
+
                         <p style="color:#cc99ff;font-weight:bold;font-size:15px;margin:0 0 6px 0;">⬆️ Double Down</p>
                         <p style="margin:0 0 14px 0;">
                             Available on your <em>first two cards only</em>. Doubles your bet, deals you exactly one
                             more card, then stands automatically. High risk, high reward.
                         </p>
+
+
                         <p style="color:#cc99ff;font-weight:bold;font-size:15px;margin:0 0 6px 0;">✂️ Split</p>
                         <p style="margin:0 0 14px 0;">
                             If your first two cards have the <em>same value</em> (e.g. two 8s, or any two 10-value cards),
                             you can split them into two separate hands. A second equal bet is placed automatically.
                             You play each hand one at a time.
                         </p>
+
+
                         <p style="color:#cc99ff;font-weight:bold;font-size:15px;margin:0 0 6px 0;">☠️ Insurance</p>
                         <p style="margin:0 0 14px 0;">
                             Offered when the dealer shows an <strong style="color:white;">Ace</strong>.
@@ -248,6 +280,8 @@ class BlackjackGameManager {
                             If the dealer has Blackjack, insurance pays <strong style="color:#ffcc00;">2:1</strong>
                             and you break even. If not, you lose the insurance bet and the game continues normally.
                         </p>
+
+
                         <p style="color:#cc99ff;font-weight:bold;font-size:15px;margin:0 0 6px 0;">🎰 Natural Blackjack</p>
                         <p style="margin:0 0 14px 0;">
                             An Ace + any 10-value card on your first two cards is a
@@ -255,6 +289,8 @@ class BlackjackGameManager {
                             <strong style="color:#00cc44;">3:2</strong> (e.g. bet $100, win $150).
                             If the dealer also has Blackjack, it's a <em>push</em> and your bet is returned.
                         </p>
+
+
                         <p style="color:#cc99ff;font-weight:bold;font-size:15px;margin:0 0 6px 0;">🤝 Push</p>
                         <p style="margin:0 0 0 0;">
                             If you and the dealer tie, your bet is returned — no one wins.
@@ -262,6 +298,7 @@ class BlackjackGameManager {
                     </div>
                 </div>
             </div>
+
 
             <!-- ── Betting area ── -->
             <div id="bj-betting-area" style="
@@ -291,14 +328,18 @@ class BlackjackGameManager {
                 </p>
             </div>
 
+
             <!-- ── Active game area ── -->
             <div id="bj-game-container" style="display:none;">
+
+
                 <div style="background:#150025; padding:10px; border-radius:8px;
                             margin-bottom:12px; text-align:center;">
                     <p id="bj-bet-display" style="color:#cc99ff;font-size:18px;font-weight:bold;margin:0;">
                         Current Bet: $0
                     </p>
                 </div>
+
 
                 <!-- Insurance offer -->
                 <div id="bj-insurance-dialog" style="
@@ -324,6 +365,7 @@ class BlackjackGameManager {
                     </div>
                 </div>
 
+
                 <!-- Dealer -->
                 <div style="margin-bottom:12px;">
                     <h2 style="color:#e0c0ff;font-size:19px;margin-bottom:6px;">
@@ -331,6 +373,7 @@ class BlackjackGameManager {
                     </h2>
                     <div id="bj-dealer-cards" style="display:flex;flex-wrap:wrap;"></div>
                 </div>
+
 
                 <!-- Player hands (flex row, supports split) -->
                 <div id="bj-player-hands" style="display:flex;gap:14px;flex-wrap:wrap;margin-bottom:12px;">
@@ -348,16 +391,21 @@ class BlackjackGameManager {
                     </div>
                 </div>
 
-               <!-- Controls -->
-               <div id="bj-controls" style="display:flex;gap:6px;flex-wrap:wrap;justify-content:center;margin-bottom:12px;">
-                   <button id="bj-hit"    class="bj-btn" style="background:#006622;color:white;">Hit 👊</button>
-                   <button id="bj-stand"  class="bj-btn" style="background:#8b0000;color:white;">Stand ✋</button>
-                   <button id="bj-split"  class="bj-btn" style="background:#3d0066;color:#cc99ff;display:none;">Split ✂️</button>
-                   <button id="bj-double" class="bj-btn" style="background:#664400;color:#ffcc66;">Double Down ⬆️</button>
-                   <button id="bj-newbet" class="bj-btn" style="background:#003344;color:#99ccff;display:none;">New Bet 🎲</button>
-                   <button id="bj-help-open-game" class="bj-btn" style="background:#3d0066;color:#cc99ff;border:1px solid #6b0ac9;">❓ Help</button>
-                   <button id="bj-exit"   class="bj-btn" style="background:#330000;color:#ff6666;">Exit Casino 🚪</button>
-               </div>
+
+                <!-- Controls -->
+                <div id="bj-controls" style="display:flex;gap:6px;flex-wrap:wrap;justify-content:center;margin-bottom:12px;">
+                    <button id="bj-hit"    class="bj-btn" style="background:#006622;color:white;">Hit 👊</button>
+                    <button id="bj-stand"  class="bj-btn" style="background:#8b0000;color:white;">Stand ✋</button>
+                    <button id="bj-split"  class="bj-btn" style="background:#3d0066;color:#cc99ff;display:none;">Split ✂️</button>
+                    <button id="bj-double" class="bj-btn" style="background:#664400;color:#ffcc66;">Double Down ⬆️</button>
+                    <button id="bj-peek"   class="bj-btn" style="background:#1f5cff;color:white;">Peek 👁️</button>
+                    <button id="bj-swap"   class="bj-btn" style="background:#7a3cff;color:white;">Swap 🔁</button>
+                    <button id="bj-redeem" class="bj-btn" style="background:#ff8f1f;color:#1b0f00;">Redeem 🩹</button>
+                    <button id="bj-risk"   class="bj-btn" style="background:#c40000;color:white;">Risk ⚡</button>
+                    <button id="bj-newbet" class="bj-btn" style="background:#003344;color:#99ccff;display:none;">New Bet 🎲</button>
+                    <button id="bj-help-open-game" class="bj-btn" style="background:#3d0066;color:#cc99ff;border:1px solid #6b0ac9;">❓ Help</button>
+                    <button id="bj-exit"   class="bj-btn" style="background:#330000;color:#ff6666;">Exit Casino 🚪</button>
+                </div>
 
 
                 <p id="bj-message" style="color:white;font-weight:bold;text-align:center;
@@ -366,6 +414,7 @@ class BlackjackGameManager {
         `;
         this.initializeBlackjack();
     }
+
 
     initializeBlackjack() {
         setTimeout(() => {
@@ -381,38 +430,55 @@ class BlackjackGameManager {
             const insMax        = document.getElementById('bj-ins-max');
             const insAmountEl   = document.getElementById('bj-ins-amount');
 
-           const hitBtn    = document.getElementById('bj-hit');
-           const standBtn  = document.getElementById('bj-stand');
-           const splitBtn  = document.getElementById('bj-split');
-           const doubleBtn = document.getElementById('bj-double');
-           const newBetBtn = document.getElementById('bj-newbet');
-           const exitBtn   = document.getElementById('bj-exit');
-           const insYes    = document.getElementById('bj-ins-yes');
-           const insNo     = document.getElementById('bj-ins-no');
 
-            const helpModal    = document.getElementById('bj-help-modal');
-            const helpOpenBet  = document.getElementById('bj-help-open-bet');
-            const helpOpenGame = document.getElementById('bj-help-open-game');
-            const helpClose    = document.getElementById('bj-help-close');
+            const hitBtn    = document.getElementById('bj-hit');
+            const standBtn  = document.getElementById('bj-stand');
+            const splitBtn  = document.getElementById('bj-split');
+            const doubleBtn = document.getElementById('bj-double');
+            const peekBtn   = document.getElementById('bj-peek');
+            const swapBtn   = document.getElementById('bj-swap');
+            const redeemBtn = document.getElementById('bj-redeem');
+            const riskBtn   = document.getElementById('bj-risk');
+            const newBetBtn = document.getElementById('bj-newbet');
+            const exitBtn   = document.getElementById('bj-exit');
+            const insYes    = document.getElementById('bj-ins-yes');
+            const insNo     = document.getElementById('bj-ins-no');
+
+
+            const helpModal     = document.getElementById('bj-help-modal');
+            const helpOpenBet   = document.getElementById('bj-help-open-bet');
+            const helpOpenGame  = document.getElementById('bj-help-open-game');
+            const helpClose     = document.getElementById('bj-help-close');
+
 
             const openHelp  = () => { helpModal.style.display = 'flex'; };
             const closeHelp = () => { helpModal.style.display = 'none'; };
 
+
             helpOpenBet.addEventListener ('click', openHelp);
             helpOpenGame.addEventListener('click', openHelp);
             helpClose.addEventListener   ('click', closeHelp);
+            // Click outside the card to close
             helpModal.addEventListener('click', (e) => { if (e.target === helpModal) closeHelp(); });
 
-           // ── Game state ────────────────────────────────────────────────────
-           let deck             = [];
-           let hands            = [[]];   // hands[0] always exists; split adds hands[1]
-           let bets             = [0];
-           let dealerHand       = [];
-           let currentHandIdx   = 0;
-           let handsDone        = [false];
-           let doubleUsed       = [false];
-           let roundOver        = false;
-           let insuranceBet     = 0;
+
+            // ── Game state ────────────────────────────────────────────────────
+            let deck             = [];
+            let hands            = [[]];   // hands[0] always exists; split adds hands[1]
+            let bets             = [0];
+            let dealerHand       = [];
+            let currentHandIdx   = 0;
+            let handsDone        = [false];
+            let doubleUsed       = [false];
+            let roundOver        = false;
+            let insuranceBet     = 0;
+            let peekUsed         = false;
+            let swapUsed         = false;
+            let redeemUsed       = false;
+            let riskUsed         = false;
+            let dealerPeekRevealed = false;
+            let redemptionReady  = false;
+            let redemptionCard   = null;
 
 
             // ── Deck helpers ──────────────────────────────────────────────────
@@ -424,6 +490,7 @@ class BlackjackGameManager {
                 return shuffleDeck(d);
             };
 
+
             const shuffleDeck = (d) => {
                 for (let i = d.length - 1; i > 0; i--) {
                     const j = Math.floor(Math.random() * (i + 1));
@@ -432,11 +499,13 @@ class BlackjackGameManager {
                 return d;
             };
 
+
             const faceValue = (card) => {
                 if (['J','Q','K'].includes(card.value)) return 10;
                 if (card.value === 'A') return 11;
                 return parseInt(card.value);
             };
+
 
             const calcHand = (hand) => {
                 let val = 0, aces = 0;
@@ -445,10 +514,13 @@ class BlackjackGameManager {
                 return val;
             };
 
+
             const isNaturalBJ = (hand) => hand.length === 2 && calcHand(hand) === 21;
+
 
             // For split eligibility: treat 10/J/Q/K as the same "10" group
             const splitKey = (card) => (['J','Q','K'].includes(card.value) ? '10' : card.value);
+
 
             // ── Rendering ─────────────────────────────────────────────────────
             const makeCard = (card, hidden = false) => {
@@ -464,6 +536,7 @@ class BlackjackGameManager {
                 return el;
             };
 
+
             const renderHand = (idx) => {
                 const cardsEl = document.getElementById(`bj-h${idx}-cards`);
                 const scoreEl = document.getElementById(`bj-h${idx}-score`);
@@ -473,13 +546,18 @@ class BlackjackGameManager {
                 scoreEl.textContent = calcHand(hands[idx]);
             };
 
-           const renderDealer = (revealAll = false) => {
-               dealerCardsEl.innerHTML = '';
-               dealerHand.forEach((c, i) => dealerCardsEl.appendChild(makeCard(c, !revealAll && i > 0)));
-               dealerScoreEl.textContent = revealAll
-                   ? calcHand(dealerHand)
-                   : faceValue(dealerHand[0]);
-           };
+
+            const renderDealer = (revealAll = false) => {
+                dealerCardsEl.innerHTML = '';
+                dealerHand.forEach((c, i) => dealerCardsEl.appendChild(makeCard(c, !revealAll && i > 0)));
+                dealerScoreEl.textContent = revealAll
+                    ? calcHand(dealerHand)
+                    : (dealerPeekRevealed ? calcHand(dealerHand) : faceValue(dealerHand[0]));
+            };
+
+            const refreshDealerView = () => {
+                renderDealer(dealerPeekRevealed || roundOver);
+            };
 
 
             const setActiveHand = (idx) => {
@@ -490,10 +568,12 @@ class BlackjackGameManager {
                 });
             };
 
+
             // ── Button state helpers ──────────────────────────────────────────
             const refreshActionButtons = () => {
                 const hand = hands[currentHandIdx];
                 if (!hand) return;
+
 
                 const canHit    = !roundOver;
                 const canStand  = !roundOver;
@@ -504,16 +584,20 @@ class BlackjackGameManager {
                 const canSplit  = !roundOver
                     && hand.length === 2
                     && splitKey(hand[0]) === splitKey(hand[1])
-                    && hands.length === 1
+                    && hands.length === 1          // only one split allowed
                     && this.money >= bets[0];
 
 
-               hitBtn.disabled   = !canHit;
-               standBtn.disabled = !canStand;
-               doubleBtn.disabled = !canDouble;
-               splitBtn.style.display  = canSplit ? 'inline-block' : 'none';
-               newBetBtn.style.display = 'none';
-           };
+                hitBtn.disabled   = !canHit;
+                standBtn.disabled = !canStand;
+                doubleBtn.disabled = !canDouble;
+                splitBtn.style.display  = canSplit ? 'inline-block' : 'none';
+                peekBtn.disabled   = peekUsed || roundOver;
+                swapBtn.disabled   = swapUsed || roundOver || dealerHand.length < 2 || deck.length === 0;
+                redeemBtn.disabled = redeemUsed || roundOver || !redemptionReady;
+                riskBtn.disabled   = riskUsed || roundOver;
+                newBetBtn.style.display = 'none';
+            };
 
 
             const showNewBetButton = () => {
@@ -522,43 +606,60 @@ class BlackjackGameManager {
                 splitBtn.style.display = 'none';
             };
 
+
             // ── Round flow ────────────────────────────────────────────────────
             const startRound = () => {
                 this.roundInProgress = true;
-                roundOver      = false;
+                roundOver     = false;
                 currentHandIdx = 0;
-                insuranceBet   = 0;
+                insuranceBet  = 0;
 
 
-               deck        = createDeck();
-               hands       = [[deck.pop(), deck.pop()]];
-               bets        = [this.currentBet];
-               handsDone   = [false];
-               doubleUsed  = [false];
-               dealerHand  = [deck.pop(), deck.pop()];
+                deck        = createDeck();
+                hands       = [[deck.pop(), deck.pop()]];
+                bets        = [this.currentBet];
+                handsDone   = [false];
+                doubleUsed  = [false];
+                dealerHand  = [deck.pop(), deck.pop()];
+                peekUsed = false;
+                swapUsed = false;
+                redeemUsed = false;
+                riskUsed = false;
+                dealerPeekRevealed = false;
+                redemptionReady = false;
+                redemptionCard = null;
 
+
+                // Reset hand 1 visibility
                 const h1 = document.getElementById('bj-hand-1');
                 if (h1) h1.style.display = 'none';
                 setActiveHand(0);
+
 
                 renderHand(0);
                 renderDealer(false);
                 insDialog.style.display = 'none';
                 messageEl.style.color   = 'white';
 
+
+                // Insurance check
                 if (dealerHand[0].value === 'A') {
                     offerInsurance();
                     return;
                 }
 
+
+                // Natural blackjack check
                 if (isNaturalBJ(hands[0])) {
                     resolveNaturalBJ();
                     return;
                 }
 
+
                 refreshActionButtons();
                 messageEl.textContent = `You have ${calcHand(hands[0])}. Hit, Stand, or use a special action.`;
             };
+
 
             // ── Insurance ─────────────────────────────────────────────────────
             const offerInsurance = () => {
@@ -571,8 +672,10 @@ class BlackjackGameManager {
                 messageEl.textContent  = '☠️ Dealer shows an Ace — buy insurance?';
             };
 
+
             const resolveInsurance = (buy) => {
                 insDialog.style.display = 'none';
+
 
                 if (buy) {
                     insuranceBet = Math.floor(bets[0] / 2);
@@ -580,6 +683,7 @@ class BlackjackGameManager {
                     this.updateMoneyDisplay();
                     betDisplay.textContent = `Current Bet: $${bets[0]} (+$${insuranceBet} insurance)`;
                 }
+
 
                 if (isNaturalBJ(dealerHand)) {
                     renderDealer(true);
@@ -596,14 +700,17 @@ class BlackjackGameManager {
                     return;
                 }
 
+
                 if (isNaturalBJ(hands[0])) {
                     resolveNaturalBJ();
                     return;
                 }
 
+
                 refreshActionButtons();
                 messageEl.textContent = `You have ${calcHand(hands[0])}. Hit, Stand, or use a special action.`;
             };
+
 
             // ── Natural Blackjack (3:2 payout) ────────────────────────────────
             const resolveNaturalBJ = () => {
@@ -617,7 +724,7 @@ class BlackjackGameManager {
                     this.money += bets[0] + winnings;
                     messageEl.textContent = `🎉 BLACKJACK! You win $${winnings}! (3:2 payout)`;
                     messageEl.style.color = '#00cc44';
-                    this.unlockAchievement('natural_bj', '♠', 'Natural Blackjack!', 'Got 21 on your first two cards!');
+                    this.unlockAchievement && this.unlockAchievement('natural_bj', '♠', 'Natural Blackjack!', 'Got 21 on your first two cards!');
                 }
                 this.updateMoneyDisplay();
                 roundOver = true;
@@ -626,41 +733,115 @@ class BlackjackGameManager {
                 checkWinLoss();
             };
 
-           // ── Player actions ────────────────────────────────────────────────
-           const hit = () => {
-               if (roundOver) return;
-               const hand = hands[currentHandIdx];
-               hand.push(deck.pop());
-               doubleUsed[currentHandIdx] = true; // can't double after hitting
-               renderHand(currentHandIdx);
-               splitBtn.style.display = 'none';
-               refreshActionButtons();
+
+            // ── Player actions ───────────────────────────────────────────────
+            const hit = () => {
+                if (roundOver) return;
+                const hand = hands[currentHandIdx];
+                hand.push(deck.pop());
+                doubleUsed[currentHandIdx] = true; // can't double after hitting
+                renderHand(currentHandIdx);
+                splitBtn.style.display = 'none';
+                refreshActionButtons();
+
+                const val = calcHand(hand);
+                if (val > 21) {
+                    if (!redeemUsed && !redemptionReady) {
+                        redemptionReady = true;
+                        redemptionCard = hand[hand.length - 1];
+                        messageEl.textContent = `💀 Bust! Use Redemption once to reverse it, or keep playing if you want to stand anyway.`;
+                        messageEl.style.color = '#cc0000';
+                        refreshActionButtons();
+                        return;
+                    }
+                    redemptionReady = false;
+                    messageEl.textContent = hands.length > 1
+                        ? `💀 Hand ${currentHandIdx + 1} busted with ${val}!`
+                        : `💀 Bust! You went over 21.`;
+                    messageEl.style.color = '#cc0000';
+                    advanceHand();
+                } else if (val === 21) {
+                    messageEl.textContent = `21! Auto-standing.`;
+                    messageEl.style.color = '#00cc44';
+                    advanceHand();
+                } else {
+                    messageEl.textContent = `You have ${val}. Hit or Stand?`;
+                    messageEl.style.color = 'white';
+                }
+            };
 
 
-               const val = calcHand(hand);
-               if (val > 21) {
-                   messageEl.textContent = hands.length > 1
-                       ? `💀 Hand ${currentHandIdx + 1} busted with ${val}!`
-                       : `💀 Bust! You went over 21.`;
-                   messageEl.style.color = '#cc0000';
-                   advanceHand();
-               } else if (val === 21) {
-                   messageEl.textContent = `21! Auto-standing.`;
-                   messageEl.style.color = '#00cc44';
-                   advanceHand();
-               } else {
-                   messageEl.textContent = `You have ${val}. Hit or Stand?`;
-                   messageEl.style.color = 'white';
-               }
-           };
+            const stand = () => {
+                if (roundOver) return;
+                messageEl.textContent = `Standing on ${calcHand(hands[currentHandIdx])}.`;
+                messageEl.style.color = 'white';
+                advanceHand();
+            };
 
+            const peekDealer = () => {
+                if (peekUsed || roundOver) return;
+                peekUsed = true;
+                dealerPeekRevealed = true;
+                refreshDealerView();
+                messageEl.textContent = `🔎 Peek used: dealer shows ${calcHand(dealerHand)} this round.`;
+                messageEl.style.color = '#ffcc00';
+                refreshActionButtons();
+            };
 
-           const stand = () => {
-               if (roundOver) return;
-               messageEl.textContent = `Standing on ${calcHand(hands[currentHandIdx])}.`;
-               messageEl.style.color = 'white';
-               advanceHand();
-           };
+            const swapDealerCard = () => {
+                if (swapUsed || roundOver || dealerHand.length < 2 || deck.length === 0) return;
+                swapUsed = true;
+                const replacement = deck.pop();
+                const oldCard = dealerHand[1];
+                dealerHand[1] = replacement;
+                deck.unshift(oldCard);
+                dealerPeekRevealed = true;
+                renderDealer(true);
+                messageEl.textContent = `🔁 Swap used: dealer's hidden card was replaced.`;
+                messageEl.style.color = '#cc99ff';
+                refreshActionButtons();
+            };
+
+            const redeemBust = () => {
+                const activeHand = hands[currentHandIdx];
+                if (redeemUsed || roundOver || !activeHand || !redemptionReady) return;
+                redeemUsed = true;
+                activeHand.pop();
+                redemptionReady = false;
+                redemptionCard = null;
+                renderHand(currentHandIdx);
+                messageEl.textContent = `🩹 Redemption used: your bust was reversed. You can hit or stand again.`;
+                messageEl.style.color = '#00cc44';
+                refreshActionButtons();
+            };
+
+            const riskIt = () => {
+                if (riskUsed || roundOver) return;
+                riskUsed = true;
+                const wins = Math.random() < 0.5;
+                if (wins) {
+                    dealerPeekRevealed = true;
+                    renderDealer(true);
+                    this.money += bets[0];
+                    this.updateMoneyDisplay();
+                    messageEl.textContent = `⚡ RISK hit: you forced a win and take $${bets[0]} profit.`;
+                    messageEl.style.color = '#00cc44';
+                    roundOver = true;
+                    this.roundInProgress = false;
+                    showNewBetButton();
+                    checkWinLoss();
+                } else {
+                    this.money = 0;
+                    this.updateMoneyDisplay();
+                    renderDealer(true);
+                    messageEl.textContent = `⚡ RISK failed: you lost all your money.`;
+                    messageEl.style.color = '#cc0000';
+                    roundOver = true;
+                    this.roundInProgress = false;
+                    showNewBetButton();
+                    checkWinLoss();
+                }
+            };
 
 
             const doubleDown = () => {
@@ -668,16 +849,19 @@ class BlackjackGameManager {
                 const hand = hands[currentHandIdx];
                 if (hand.length !== 2 || doubleUsed[currentHandIdx] || this.money < bets[currentHandIdx]) return;
 
+
                 this.money -= bets[currentHandIdx];
                 bets[currentHandIdx] *= 2;
                 doubleUsed[currentHandIdx] = true;
                 this.updateMoneyDisplay();
                 betDisplay.textContent = `Current Bet: $${bets[currentHandIdx]} (Doubled!)`;
 
+
                 hand.push(deck.pop());
                 renderHand(currentHandIdx);
                 splitBtn.style.display = 'none';
                 refreshActionButtons();
+
 
                 const val = calcHand(hand);
                 messageEl.textContent = val > 21
@@ -687,23 +871,29 @@ class BlackjackGameManager {
                 advanceHand();
             };
 
+
             const split = () => {
                 const hand = hands[0];
                 if (hands.length > 1 || hand.length !== 2) return;
                 if (splitKey(hand[0]) !== splitKey(hand[1])) return;
                 if (this.money < bets[0]) return;
 
+
+                // Deduct additional bet
                 this.money -= bets[0];
                 this.updateMoneyDisplay();
 
+
+                // Build two hands: each original card + one new card
                 hands = [
                     [hand[0], deck.pop()],
                     [hand[1], deck.pop()]
                 ];
-                bets       = [bets[0], bets[0]];
-                handsDone  = [false, false];
+                bets      = [bets[0], bets[0]];
+                handsDone = [false, false];
                 doubleUsed = [false, false];
                 currentHandIdx = 0;
+
 
                 const h1El = document.getElementById('bj-hand-1');
                 if (h1El) h1El.style.display = 'block';
@@ -712,59 +902,70 @@ class BlackjackGameManager {
                 setActiveHand(0);
                 refreshActionButtons();
 
+
                 messageEl.textContent = `✂️ Split! Playing Hand 1 first — you have ${calcHand(hands[0])}.`;
                 messageEl.style.color = '#cc99ff';
             };
+
 
             // ── Advance to next hand or dealer ────────────────────────────────
             const advanceHand = () => {
                 handsDone[currentHandIdx] = true;
 
+
                 if (hands.length > 1 && currentHandIdx === 0) {
+                    // Switch to split hand 2
                     currentHandIdx = 1;
                     setActiveHand(1);
                     refreshActionButtons();
                     const val = calcHand(hands[1]);
                     messageEl.textContent = `Now playing Split Hand 2 — you have ${val}.`;
                     messageEl.style.color = '#ffcc00';
-                    if (val >= 21) advanceHand();
+                    if (val >= 21) advanceHand(); // auto-advance if 21 or bust
                 } else {
                     dealerPlay();
                 }
             };
 
-           // ── Dealer plays ──────────────────────────────────────────────────
-           const dealerPlay = () => {
-               roundOver = true;
-               hitBtn.disabled = standBtn.disabled = doubleBtn.disabled = true;
-               splitBtn.style.display = 'none';
-               renderDealer(true);
+
+            // ── Dealer plays ──────────────────────────────────────────────────
+            const dealerPlay = () => {
+                roundOver = true;
+                hitBtn.disabled = standBtn.disabled = doubleBtn.disabled = true;
+                splitBtn.style.display = 'none';
+                peekBtn.disabled = swapBtn.disabled = redeemBtn.disabled = riskBtn.disabled = true;
+                renderDealer(true);
 
 
                 while (calcHand(dealerHand) < 17) dealerHand.push(deck.pop());
                 renderDealer(true);
 
+
                 const dealerVal = calcHand(dealerHand);
                 const results = hands.map((hand, i) => {
                     const pv = calcHand(hand);
-                    if (pv > 21)        return { handIdx: i, result: 'loss' };
-                    if (dealerVal > 21) return { handIdx: i, result: 'win'  };
-                    if (pv > dealerVal) return { handIdx: i, result: 'win'  };
-                    if (pv < dealerVal) return { handIdx: i, result: 'loss' };
+                    if (pv > 21)             return { handIdx: i, result: 'loss' };
+                    if (dealerVal > 21)      return { handIdx: i, result: 'win'  };
+                    if (pv > dealerVal)      return { handIdx: i, result: 'win'  };
+                    if (pv < dealerVal)      return { handIdx: i, result: 'loss' };
                     return { handIdx: i, result: 'push' };
                 });
 
+
                 endAllRounds(results);
             };
+
 
             // ── Resolve all hands ─────────────────────────────────────────────
             const endAllRounds = (results) => {
                 roundOver = true;
                 this.roundInProgress = false;
-                const moneyBefore = this.money;
+
 
                 let totalGain = 0;
                 const msgs = [];
+                const moneyBefore = this.money;
+
 
                 results.forEach(({ handIdx, result }) => {
                     const bet = bets[handIdx] !== undefined ? bets[handIdx] : bets[0];
@@ -780,21 +981,26 @@ class BlackjackGameManager {
                     }
                 });
 
-                const anyWin  = results.some(r => r.result === 'win');
-                const allLoss = results.every(r => r.result === 'loss');
-                if (anyWin)       this.winStreak++;
-                else if (allLoss) this.winStreak = 0;
 
                 this.updateMoneyDisplay();
                 messageEl.textContent = msgs.join('  |  ');
+                const allLoss = results.every(r => r.result === 'loss');
                 messageEl.style.color = totalGain > 0 ? '#00cc44' : allLoss ? '#cc0000' : '#ffcc00';
 
-                this.checkAchievements(results, hands, bets, moneyBefore);
-                if (totalGain > 0) this.triggerWinConfetti();
-                else if (allLoss)  this.triggerLossShake();
+
+                // achievements & effects (merged additions)
+                const anyWin  = results.some(r => r.result === 'win');
+                if (anyWin)       this.winStreak++;
+                else if (allLoss) this.winStreak = 0;
+
+                this.checkAchievements && this.checkAchievements(results, hands, bets, moneyBefore);
+                if (totalGain > 0) this.triggerWinConfetti && this.triggerWinConfetti();
+                else if (allLoss)  this.triggerLossShake && this.triggerLossShake();
+
                 showNewBetButton();
                 checkWinLoss();
             };
+
 
             // ── Win / loss conditions ─────────────────────────────────────────
             const checkWinLoss = () => {
@@ -810,20 +1016,28 @@ class BlackjackGameManager {
                 }
             };
 
-           // ── New bet / reset ───────────────────────────────────────────────
-           const newBet = () => {
-               gameContainer.style.display = 'none';
-               bettingArea.style.display   = 'block';
-               betMessage.textContent      = "Choose a bet to summon the cards!";
-               betMessage.style.color      = '#cc99ff';
-               this.currentBet = 0;
-               betDisplay.textContent = 'Current Bet: $0';
-               roundOver = false;
-               insuranceBet = 0;
-               // Reset hand display
-               const h1El = document.getElementById('bj-hand-1');
-               if (h1El) h1El.style.display = 'none';
-           };
+
+            // ── New bet / reset ───────────────────────────────────────────────
+            const newBet = () => {
+                gameContainer.style.display = 'none';
+                bettingArea.style.display   = 'block';
+                betMessage.textContent      = "Choose a bet to summon the cards!";
+                betMessage.style.color      = '#cc99ff';
+                this.currentBet = 0;
+                betDisplay.textContent = 'Current Bet: $0';
+                roundOver = false;
+                insuranceBet = 0;
+                peekUsed = false;
+                swapUsed = false;
+                redeemUsed = false;
+                riskUsed = false;
+                dealerPeekRevealed = false;
+                redemptionReady = false;
+                redemptionCard = null;
+                // Reset hand display
+                const h1El = document.getElementById('bj-hand-1');
+                if (h1El) h1El.style.display = 'none';
+            };
 
 
             // ── Bet buttons ───────────────────────────────────────────────────
@@ -831,6 +1045,7 @@ class BlackjackGameManager {
                 btn.addEventListener('click', () => {
                     const raw    = btn.dataset.bet;
                     const amount = raw === 'all' ? this.money : parseInt(raw);
+
 
                     if (this.money <= 0) {
                         betMessage.textContent = '💀 Out of chips! Exit and try again.';
@@ -843,6 +1058,7 @@ class BlackjackGameManager {
                         return;
                     }
 
+
                     this.currentBet  = amount;
                     this.money      -= amount;
                     this.updateMoneyDisplay();
@@ -853,18 +1069,25 @@ class BlackjackGameManager {
                 });
             });
 
-           // ── Control listeners ─────────────────────────────────────────────
-           hitBtn.addEventListener   ('click', hit);
-           standBtn.addEventListener ('click', stand);
-           splitBtn.addEventListener ('click', split);
-           doubleBtn.addEventListener('click', doubleDown);
-           newBetBtn.addEventListener('click', newBet);
-           exitBtn.addEventListener  ('click', () => this.exitGame());
-           insYes.addEventListener   ('click', () => resolveInsurance(true));
-           insNo.addEventListener    ('click', () => resolveInsurance(false));
+
+            // ── Control listeners ─────────────────────────────────────────────
+            hitBtn.addEventListener   ('click', hit);
+            standBtn.addEventListener ('click', stand);
+            splitBtn.addEventListener ('click', split);
+            doubleBtn.addEventListener('click', doubleDown);
+            peekBtn.addEventListener  ('click', peekDealer);
+            swapBtn.addEventListener  ('click', swapDealerCard);
+            redeemBtn.addEventListener('click', redeemBust);
+            riskBtn.addEventListener  ('click', riskIt);
+            newBetBtn.addEventListener('click', newBet);
+            exitBtn.addEventListener  ('click', () => this.exitGame());
+            insYes.addEventListener   ('click', () => resolveInsurance(true));
+            insNo.addEventListener    ('click', () => resolveInsurance(false));
+
 
         }, 100);
     }
+
 
     // ── Win / loss effects ────────────────────────────────────────────────────
 
@@ -935,12 +1158,14 @@ class BlackjackGameManager {
     // ── Achievement system ────────────────────────────────────────────────────
 
     unlockAchievement(key, icon, title, sub) {
+        if (!this.achievements) this.achievements = new Set();
         if (this.achievements.has(key)) return;
         this.achievements.add(key);
         this.showAchievement(icon, title, sub);
     }
 
     checkAchievements(results, hands, bets, moneyBefore) {
+        if (!this.achievements) this.achievements = new Set();
         const anyWin = results.some(r => r.result === 'win');
         const allWin = results.every(r => r.result === 'win');
 
@@ -950,7 +1175,7 @@ class BlackjackGameManager {
         if (this.winStreak >= 3 && !this.achievements.has('on_fire'))
             this.unlockAchievement('on_fire', '🔥', 'On Fire!', '3 winning rounds in a row!');
 
-        if (anyWin && moneyBefore <= 200 && !this.achievements.has('ghost_mode'))
+        if (anyWin && typeof moneyBefore === 'number' && moneyBefore <= 200 && !this.achievements.has('ghost_mode'))
             this.unlockAchievement('ghost_mode', '👻', 'Ghost Mode', 'Won a hand with $200 or less left!');
 
         if (anyWin && bets.some(b => b >= 5000) && !this.achievements.has('high_roller'))
@@ -1012,9 +1237,9 @@ class BlackjackGameManager {
                 this.overlay = null;
             }, 800);
         }
-        this.gameActive   = false;
-        this.money        = 1000;
-        this.currentBet   = 0;
+        this.gameActive  = false;
+        this.money       = 1000;
+        this.currentBet  = 0;
         this.achievements = new Set();
         this.winStreak    = 0;
         if (this._parallaxStyle && this._parallaxStyle.parentNode) {
@@ -1023,11 +1248,12 @@ class BlackjackGameManager {
         }
     }
 
+
     resetLevel() {
         this.money = 1000;
         this.exitGame();
         window.location.reload();
     }
 }
-
+// ...existing code...
 export default BlackjackGameManager;
