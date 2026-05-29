@@ -580,49 +580,8 @@ class MansionLevel3 {
         }
     }
 
-    winLevel() {
-        console.log("🎉 Level 3 Casino — Won!");
-
-        // Unlock level 4 for the lobby
-        localStorage.setItem('mansionGame_level4_unlocked', 'true');
-
-        const dialogueSystem = new DialogueSystem();
-        dialogueSystem.showDialogue(
-            'You won $10,000 at the haunted casino! The spirits are impressed... deeper into the mansion you go!',
-            'Victory!',
-            this.gameEnv.path + '/images/projects/mansionGame/key_lvl3.png'
-        );
-        dialogueSystem.addButtons([
-            {
-                text: 'Continue to Level 4',
-                primary: true,
-                action: () => {
-                    dialogueSystem.closeDialogue();
-                    if (this.gameEnv && this.gameEnv.gameControl) {
-                        const gc = this.gameEnv.gameControl;
-                        gc.levelClasses = [MansionLevel4];
-                        gc.currentLevelIndex = 0;
-                        gc.isPaused = false;
-                        gc.transitionToLevel();
-                    }
-                }
-            },
-            {
-                text: 'Return to Lobby',
-                primary: false,
-                action: () => {
-                    dialogueSystem.closeDialogue();
-                    if (this.gameEnv && this.gameEnv.gameControl) {
-                        const gc = this.gameEnv.gameControl;
-                        gc.levelClasses = [MansionLevelMain];
-                        gc.currentLevelIndex = 0;
-                        gc.isPaused = false;
-                        gc.transitionToLevel();
-                    }
-                }
-            }
-        ]);
-    }
+    // TODO: Part 5 (Victory flow) — Group Member 5
+    // winLevel()
 
     destroy() {
         console.log("🧹 MansionLevel3 cleanup...");
