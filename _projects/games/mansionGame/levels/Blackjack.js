@@ -395,6 +395,10 @@ class BlackjackGameManager {
                    <button id="bj-stand"  class="bj-btn" style="background:#8b0000;color:white;">Stand ✋</button>
                    <button id="bj-split"  class="bj-btn" style="background:#3d0066;color:#cc99ff;display:none;">Split ✂️</button>
                    <button id="bj-double" class="bj-btn" style="background:#664400;color:#ffcc66;">Double Down ⬆️</button>
+                   <button id="bj-peek"   class="bj-btn" style="background:#1f5cff;color:white;">Peek 👁️</button>
+                   <button id="bj-swap"   class="bj-btn" style="background:#7a3cff;color:white;">Swap 🔁</button>
+                   <button id="bj-redeem" class="bj-btn" style="background:#ff8f1f;color:#1b0f00;">Redeem 🩹</button>
+                   <button id="bj-risk"   class="bj-btn" style="background:#c40000;color:white;">Risk ⚡</button>
                    <button id="bj-newbet" class="bj-btn" style="background:#003344;color:#99ccff;display:none;">New Bet 🎲</button>
                    <button id="bj-help-open-game" class="bj-btn" style="background:#3d0066;color:#cc99ff;border:1px solid #6b0ac9;">❓ Help</button>
                    <button id="bj-exit"   class="bj-btn" style="background:#330000;color:#ff6666;">Exit Casino 🚪</button>
@@ -428,6 +432,10 @@ class BlackjackGameManager {
            const standBtn  = document.getElementById('bj-stand');
            const splitBtn  = document.getElementById('bj-split');
            const doubleBtn = document.getElementById('bj-double');
+           const peekBtn   = document.getElementById('bj-peek');
+           const swapBtn   = document.getElementById('bj-swap');
+           const redeemBtn = document.getElementById('bj-redeem');
+           const riskBtn   = document.getElementById('bj-risk');
            const newBetBtn = document.getElementById('bj-newbet');
            const exitBtn   = document.getElementById('bj-exit');
            const insYes    = document.getElementById('bj-ins-yes');
@@ -461,6 +469,13 @@ class BlackjackGameManager {
            let doubleUsed       = [false];
            let roundOver        = false;
            let insuranceBet     = 0;
+           let peekUsed         = false;
+           let swapUsed         = false;
+           let redeemUsed       = false;
+           let riskUsed         = false;
+           let dealerPeekRevealed = false;
+           let redemptionReady  = false;
+           let redemptionCard   = null;
 
 
            // ── Deck helpers ──────────────────────────────────────────────────
@@ -534,7 +549,11 @@ class BlackjackGameManager {
                dealerHand.forEach((c, i) => dealerCardsEl.appendChild(makeCard(c, !revealAll && i > 0)));
                dealerScoreEl.textContent = revealAll
                    ? calcHand(dealerHand)
-                   : faceValue(dealerHand[0]);
+                   : (dealerPeekRevealed ? calcHand(dealerHand) : faceValue(dealerHand[0]));
+           };
+
+           const refreshDealerView = () => {
+               renderDealer(dealerPeekRevealed || roundOver);
            };
 
 
@@ -570,6 +589,10 @@ class BlackjackGameManager {
                standBtn.disabled = !canStand;
                doubleBtn.disabled = !canDouble;
                splitBtn.style.display  = canSplit ? 'inline-block' : 'none';
+               peekBtn.disabled   = peekUsed || roundOver;
+               swapBtn.disabled   = swapUsed || roundOver || dealerHand.length < 2 || deck.length === 0;
+               redeemBtn.disabled = redeemUsed || roundOver || !redemptionReady;
+               riskBtn.disabled   = riskUsed || roundOver;
                newBetBtn.style.display = 'none';
            };
 
@@ -595,6 +618,13 @@ class BlackjackGameManager {
                handsDone   = [false];
                doubleUsed  = [false];
                dealerHand  = [deck.pop(), deck.pop()];
+               peekUsed = false;
+               swapUsed = false;
+               redeemUsed = false;
+               riskUsed = false;
+               dealerPeekRevealed = false;
+               redemptionReady = false;
+               redemptionCard = null;
 
 
                // Reset hand 1 visibility
@@ -710,9 +740,17 @@ class BlackjackGameManager {
                splitBtn.style.display = 'none';
                refreshActionButtons();
 
-
                const val = calcHand(hand);
                if (val > 21) {
+                   if (!redeemUsed && !redemptionReady) {
+                       redemptionReady = true;
+                       redemptionCard = hand[hand.length - 1];
+                       messageEl.textContent = `💀 Bust! Use Redemption once to reverse it, or keep playing if you want to stand anyway.`;
+                       messageEl.style.color = '#cc0000';
+                       refreshActionButtons();
+                       return;
+                   }
+                   redemptionReady = false;
                    messageEl.textContent = hands.length > 1
                        ? `💀 Hand ${currentHandIdx + 1} busted with ${val}!`
                        : `💀 Bust! You went over 21.`;
@@ -734,6 +772,71 @@ class BlackjackGameManager {
                messageEl.textContent = `Standing on ${calcHand(hands[currentHandIdx])}.`;
                messageEl.style.color = 'white';
                advanceHand();
+           };
+
+           const peekDealer = () => {
+               if (peekUsed || roundOver) return;
+               peekUsed = true;
+               dealerPeekRevealed = true;
+               refreshDealerView();
+               messageEl.textContent = `🔎 Peek used: dealer shows ${calcHand(dealerHand)} this round.`;
+               messageEl.style.color = '#ffcc00';
+               refreshActionButtons();
+           };
+
+           const swapDealerCard = () => {
+               if (swapUsed || roundOver || dealerHand.length < 2 || deck.length === 0) return;
+               swapUsed = true;
+               const replacement = deck.pop();
+               const oldCard = dealerHand[1];
+               dealerHand[1] = replacement;
+               deck.unshift(oldCard);
+               dealerPeekRevealed = true;
+               renderDealer(true);
+               messageEl.textContent = `🔁 Swap used: dealer's hidden card was replaced.`;
+               messageEl.style.color = '#cc99ff';
+               refreshActionButtons();
+           };
+
+           const redeemBust = () => {
+               const activeHand = hands[currentHandIdx];
+               if (redeemUsed || roundOver || !activeHand || !redemptionReady) return;
+               redeemUsed = true;
+               activeHand.pop();
+               redemptionReady = false;
+               redemptionCard = null;
+               renderHand(currentHandIdx);
+               messageEl.textContent = `🩹 Redemption used: your bust was reversed. You can hit or stand again.`;
+               messageEl.style.color = '#00cc44';
+               refreshActionButtons();
+           };
+
+           const riskIt = () => {
+               if (riskUsed || roundOver) return;
+               riskUsed = true;
+               const wins = Math.random() < 0.5;
+               if (wins) {
+                   dealerPeekRevealed = true;
+                   renderDealer(true);
+                   this.money += bets[0];
+                   this.updateMoneyDisplay();
+                   messageEl.textContent = `⚡ RISK hit: you forced a win and take $${bets[0]} profit.`;
+                   messageEl.style.color = '#00cc44';
+                   roundOver = true;
+                   this.roundInProgress = false;
+                   showNewBetButton();
+                   checkWinLoss();
+               } else {
+                   this.money = 0;
+                   this.updateMoneyDisplay();
+                   renderDealer(true);
+                   messageEl.textContent = `⚡ RISK failed: you lost all your money.`;
+                   messageEl.style.color = '#cc0000';
+                   roundOver = true;
+                   this.roundInProgress = false;
+                   showNewBetButton();
+                   checkWinLoss();
+               }
            };
 
 
@@ -826,6 +929,7 @@ class BlackjackGameManager {
                roundOver = true;
                hitBtn.disabled = standBtn.disabled = doubleBtn.disabled = true;
                splitBtn.style.display = 'none';
+               peekBtn.disabled = swapBtn.disabled = redeemBtn.disabled = riskBtn.disabled = true;
                renderDealer(true);
 
 
@@ -909,6 +1013,13 @@ class BlackjackGameManager {
                betDisplay.textContent = 'Current Bet: $0';
                roundOver = false;
                insuranceBet = 0;
+               peekUsed = false;
+               swapUsed = false;
+               redeemUsed = false;
+               riskUsed = false;
+               dealerPeekRevealed = false;
+               redemptionReady = false;
+               redemptionCard = null;
                // Reset hand display
                const h1El = document.getElementById('bj-hand-1');
                if (h1El) h1El.style.display = 'none';
@@ -950,6 +1061,10 @@ class BlackjackGameManager {
            standBtn.addEventListener ('click', stand);
            splitBtn.addEventListener ('click', split);
            doubleBtn.addEventListener('click', doubleDown);
+           peekBtn.addEventListener  ('click', peekDealer);
+           swapBtn.addEventListener  ('click', swapDealerCard);
+           redeemBtn.addEventListener('click', redeemBust);
+           riskBtn.addEventListener  ('click', riskIt);
            newBetBtn.addEventListener('click', newBet);
            exitBtn.addEventListener  ('click', () => this.exitGame());
            insYes.addEventListener   ('click', () => resolveInsurance(true));
@@ -992,6 +1107,3 @@ class BlackjackGameManager {
 
 
 export default BlackjackGameManager;
-
-
-
