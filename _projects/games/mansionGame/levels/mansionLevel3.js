@@ -11,36 +11,36 @@ console.log("🎮 mansionLevel3.js loaded!");
 
 // Halloween palette
 const HEX = {
-    purple:    '#6b0ac9',
-    blood:     '#8b0000',
-    green:     '#00cc44',
-    pumpkin:   '#cc6600',
-    magenta:   '#cc00cc',
-    ghostWhite:'#e0c0ff',
+    purple: '#6b0ac9',
+    blood: '#8b0000',
+    green: '#00cc44',
+    pumpkin: '#cc6600',
+    magenta: '#cc00cc',
+    ghostWhite: '#e0c0ff',
 };
 
 class MansionLevel3 {
     constructor(gameEnv) {
         console.log("🎮 MansionLevel3 constructor started");
 
-        let width  = gameEnv.innerWidth;
+        let width = gameEnv.innerWidth;
         let height = gameEnv.innerHeight;
-        let path   = gameEnv.path;
+        let path = gameEnv.path;
 
-        this.gameEnv          = gameEnv;
+        this.gameEnv = gameEnv;
         this.blackjackManager = new BlackjackGameManager(gameEnv);
         this.blackjackManager.onWin = () => this.winLevel();
 
-        this.inMainZone          = false;
-        this.mainPromptVisible   = false;
+        this.inMainZone = false;
+        this.mainPromptVisible = false;
         this.lockedPromptVisible = false;
-        this.mainPromptEl        = null;
-        this.lockedPromptEl      = null;
-        this.spriteMenuVisible   = false;
-        this.spriteMenuEl        = null;
-        this.spriteHintEl        = null;
-        this.spriteButtonGrid    = null;
-        this.currentSpriteIndex  = 0;
+        this.mainPromptEl = null;
+        this.lockedPromptEl = null;
+        this.spriteMenuVisible = false;
+        this.spriteMenuEl = null;
+        this.spriteHintEl = null;
+        this.spriteButtonGrid = null;
+        this.currentSpriteIndex = 0;
 
         // Casino background (same sprite as level 4)
         const image_data_background = {
@@ -61,14 +61,14 @@ class MansionLevel3 {
             INIT_POSITION: { x: (width / 2 - width / (5 * MC_SCALE_FACTOR)), y: height - (height / MC_SCALE_FACTOR) },
             pixels: { height: 2400, width: 3600 },
             orientation: { rows: 2, columns: 3 },
-            down:      { row: 1, start: 0, columns: 3 },
-            downRight: { row: 1, start: 0, columns: 3, rotate:  Math.PI / 16 },
-            downLeft:  { row: 0, start: 0, columns: 3, rotate: -Math.PI / 16 },
-            left:      { row: 0, start: 0, columns: 3 },
-            right:     { row: 1, start: 0, columns: 3 },
-            up:        { row: 1, start: 0, columns: 3 },
-            upLeft:    { row: 0, start: 0, columns: 3, rotate:  Math.PI / 16 },
-            upRight:   { row: 1, start: 0, columns: 3, rotate: -Math.PI / 16 },
+            down: { row: 1, start: 0, columns: 3 },
+            downRight: { row: 1, start: 0, columns: 3, rotate: Math.PI / 16 },
+            downLeft: { row: 0, start: 0, columns: 3, rotate: -Math.PI / 16 },
+            left: { row: 0, start: 0, columns: 3 },
+            right: { row: 1, start: 0, columns: 3 },
+            up: { row: 1, start: 0, columns: 3 },
+            upLeft: { row: 0, start: 0, columns: 3, rotate: Math.PI / 16 },
+            upRight: { row: 1, start: 0, columns: 3, rotate: -Math.PI / 16 },
             hitbox: { widthPercentage: 0.45, heightPercentage: 0.2 },
             keypress: { up: 87, left: 65, down: 83, right: 68 }
         };
@@ -81,14 +81,14 @@ class MansionLevel3 {
                 SCALE_FACTOR: 6,
                 ANIMATION_RATE: 10,
                 orientation: { rows: 2, columns: 3 },
-                down:      { row: 1, start: 0, columns: 3 },
-                downRight: { row: 1, start: 0, columns: 3, rotate:  Math.PI / 16 },
-                downLeft:  { row: 0, start: 0, columns: 3, rotate: -Math.PI / 16 },
-                left:      { row: 0, start: 0, columns: 3 },
-                right:     { row: 1, start: 0, columns: 3 },
-                up:        { row: 1, start: 0, columns: 3 },
-                upLeft:    { row: 0, start: 0, columns: 3, rotate:  Math.PI / 16 },
-                upRight:   { row: 1, start: 0, columns: 3, rotate: -Math.PI / 16 }
+                down: { row: 1, start: 0, columns: 3 },
+                downRight: { row: 1, start: 0, columns: 3, rotate: Math.PI / 16 },
+                downLeft: { row: 0, start: 0, columns: 3, rotate: -Math.PI / 16 },
+                left: { row: 0, start: 0, columns: 3 },
+                right: { row: 1, start: 0, columns: 3 },
+                up: { row: 1, start: 0, columns: 3 },
+                upLeft: { row: 0, start: 0, columns: 3, rotate: Math.PI / 16 },
+                upRight: { row: 1, start: 0, columns: 3, rotate: -Math.PI / 16 }
             },
             {
                 label: 'Mummy Boy',
@@ -97,14 +97,14 @@ class MansionLevel3 {
                 SCALE_FACTOR: 6,
                 ANIMATION_RATE: 12,
                 orientation: { rows: 4, columns: 3 },
-                down:      { row: 0, start: 0, columns: 3 },
+                down: { row: 0, start: 0, columns: 3 },
                 downRight: { row: 0, start: 0, columns: 3 },
-                downLeft:  { row: 0, start: 0, columns: 3 },
-                left:      { row: 1, start: 0, columns: 3 },
-                right:     { row: 2, start: 0, columns: 3 },
-                up:        { row: 3, start: 0, columns: 3 },
-                upLeft:    { row: 1, start: 0, columns: 3 },
-                upRight:   { row: 2, start: 0, columns: 3 }
+                downLeft: { row: 0, start: 0, columns: 3 },
+                left: { row: 1, start: 0, columns: 3 },
+                right: { row: 2, start: 0, columns: 3 },
+                up: { row: 3, start: 0, columns: 3 },
+                upLeft: { row: 1, start: 0, columns: 3 },
+                upRight: { row: 2, start: 0, columns: 3 }
             },
             {
                 label: 'Ghost Runner',
@@ -113,14 +113,14 @@ class MansionLevel3 {
                 SCALE_FACTOR: 5,
                 ANIMATION_RATE: 20,
                 orientation: { rows: 2, columns: 25 },
-                down:      { row: 1, start: 0, columns: 3 },
+                down: { row: 1, start: 0, columns: 3 },
                 downRight: { row: 1, start: 0, columns: 3, mirror: true, rotate: Math.PI / 16 },
-                downLeft:  { row: 1, start: 0, columns: 3, rotate: -Math.PI / 16 },
-                left:      { row: 1, start: 0, columns: 3 },
-                right:     { row: 1, start: 0, columns: 3, mirror: true },
-                up:        { row: 1, start: 0, columns: 3 },
-                upLeft:    { row: 0, start: 0, columns: 3, rotate: Math.PI / 16 },
-                upRight:   { row: 1, start: 0, columns: 3, mirror: true, rotate: -Math.PI / 16 }
+                downLeft: { row: 1, start: 0, columns: 3, rotate: -Math.PI / 16 },
+                left: { row: 1, start: 0, columns: 3 },
+                right: { row: 1, start: 0, columns: 3, mirror: true },
+                up: { row: 1, start: 0, columns: 3 },
+                upLeft: { row: 0, start: 0, columns: 3, rotate: Math.PI / 16 },
+                upRight: { row: 1, start: 0, columns: 3, mirror: true, rotate: -Math.PI / 16 }
             }
         ];
 
@@ -128,7 +128,7 @@ class MansionLevel3 {
         const mainZoneData = {
             x: width * 0.35,
             y: height * 0.10,
-            width:  width  * 0.30,
+            width: width * 0.30,
             height: height * 0.45,
             color: 'rgba(107, 10, 201, 0.12)',
             visible: false,
@@ -165,7 +165,7 @@ class MansionLevel3 {
             color: 'rgba(139, 0, 0, 0.08)',
             visible: false,
             onEnter: () => this.showLockedPrompt(cfg.msg),
-            onExit:  () => this.hideLockedPrompt()
+            onExit: () => this.hideLockedPrompt()
         }));
 
         this.tableCollisionZones = lockedZoneConfigs.map((cfg) => ({
@@ -176,25 +176,25 @@ class MansionLevel3 {
         }));
 
         const barrierData = [
-            { x: 0,          y: 0,           width: width, height: 20,    visible: false },
-            { x: 0,          y: height - 20, width: width, height: 20,    visible: false },
-            { x: 0,          y: 0,           width: 20,    height: height, visible: false },
-            { x: width - 20, y: 0,           width: 20,    height: height, visible: false }
+            { x: 0, y: 0, width: width, height: 20, visible: false },
+            { x: 0, y: height - 20, width: width, height: 20, visible: false },
+            { x: 0, y: 0, width: 20, height: height, visible: false },
+            { x: width - 20, y: 0, width: 20, height: height, visible: false }
         ];
 
         this.classes = [
             { class: GameEnvBackground, data: image_data_background },
-            { class: Player,            data: sprite_data_mc },
-            { class: TriggerZone,       data: mainZoneData },
+            { class: Player, data: sprite_data_mc },
+            { class: TriggerZone, data: mainZoneData },
             ...lockedZones.map(data => ({ class: TriggerZone, data })),
-            ...barrierData.map(data  => ({ class: Barrier,    data }))
+            ...barrierData.map(data => ({ class: Barrier, data }))
         ];
 
         // Spooky background music
         this.backgroundMusic = new Audio(path + '/assets/sounds/mansionGame/SpookieDookie.mp3');
-        this.backgroundMusic.loop   = true;
+        this.backgroundMusic.loop = true;
         this.backgroundMusic.volume = 0.3;
-        this.backgroundMusic.play().catch(() => {});
+        this.backgroundMusic.play().catch(() => { });
 
         this.createSpriteMenu();
         this.setupKeyListener();
@@ -526,13 +526,53 @@ class MansionLevel3 {
         this.lockedPromptEl = null;
     }
 
-    // TODO: Part 4 (Table collision enforcement) — Group Member 4
-    // enforceTableCollisions()
+    enforceTableCollisions() {
+        const player = this.getPlayer();
+        if (!player || !this.tableCollisionZones?.length) return;
+
+        const hitboxWidthPercent = (player.hitbox && player.hitbox.widthPercentage) || 1;
+        const hitboxHeightPercent = (player.hitbox && player.hitbox.heightPercentage) || 1;
+        const hitboxWidth = player.width * hitboxWidthPercent;
+        const hitboxHeight = player.height * hitboxHeightPercent;
+        const hitboxX = player.position.x + (player.width - hitboxWidth) / 2;
+        const hitboxY = player.position.y + (player.height - hitboxHeight);
+
+        for (const zone of this.tableCollisionZones) {
+            const isColliding = !(
+                hitboxX > zone.x + zone.width ||
+                hitboxX + hitboxWidth < zone.x ||
+                hitboxY > zone.y + zone.height ||
+                hitboxY + hitboxHeight < zone.y
+            );
+
+            if (!isColliding) continue;
+
+            const overlapLeft = (hitboxX + hitboxWidth) - zone.x;
+            const overlapRight = (zone.x + zone.width) - hitboxX;
+            const overlapTop = (hitboxY + hitboxHeight) - zone.y;
+            const overlapBottom = (zone.y + zone.height) - hitboxY;
+            const minOverlap = Math.min(overlapLeft, overlapRight, overlapTop, overlapBottom);
+
+            if (minOverlap === overlapLeft) {
+                player.position.x -= overlapLeft;
+                if (player.velocity) player.velocity.x = Math.min(0, player.velocity.x || 0);
+            } else if (minOverlap === overlapRight) {
+                player.position.x += overlapRight;
+                if (player.velocity) player.velocity.x = Math.max(0, player.velocity.x || 0);
+            } else if (minOverlap === overlapTop) {
+                player.position.y -= overlapTop;
+                if (player.velocity) player.velocity.y = Math.min(0, player.velocity.y || 0);
+            } else {
+                player.position.y += overlapBottom;
+                if (player.velocity) player.velocity.y = Math.max(0, player.velocity.y || 0);
+            }
+        }
+    }
 
     // ─── Level lifecycle ──────────────────────────────────────────────────────
 
     update() {
-        // TODO: Part 4 (Table collision enforcement — enforceTableCollisions call) — Group Member 4
+        this.enforceTableCollisions();
 
         // Re-hide main prompt if blackjack became active
         if (this.blackjackManager.gameActive && this.mainPromptVisible) {
