@@ -124,12 +124,13 @@ class MansionLevel3 {
             }
         ];
 
-        // Main (center spotlight) table trigger zone
+        // OPEN table — the spotlit, highlighted table in the TOP-MIDDLE of the
+        // casino sprite (image_lvl4.png). Measured footprint: x≈0.38–0.60, y≈0.05–0.42.
         const mainZoneData = {
-            x: width * 0.42,
-            y: height * 0.10,
-            width: width * 0.30,
-            height: height * 0.45,
+            x: width * 0.37,
+            y: height * 0.04,
+            width: width * 0.26,
+            height: height * 0.40,
             color: 'rgba(107, 10, 201, 0.12)',
             visible: false,
             onEnter: () => {
@@ -142,21 +143,29 @@ class MansionLevel3 {
             }
         };
 
-        // Locked side tables (4 outer tables visible in the sprite)
-        const lockedMessages = [
-            "👻 The ghost dealer isn't at this table right now!",
-            "🦇 The bats have claimed this table for the night!",
-            "🕸️ This table is tangled in cobwebs — come back never!",
-            "☠️ The skeleton croupier called in sick. Table closed!"
-        ];
-
-        // Positions estimated from image_lvl4.png layout:
-        //  upper-left, upper-right, lower-left, lower-right
+        // CLOSED tables — every other table in the sprite shows a "table closed"
+        // prompt. Footprints measured from image_lvl4.png (top-left, top-right,
+        // and the four bottom-row tables). A central walkway (x≈0.44–0.56) is left
+        // clear so the player doesn't spawn inside a closed zone.
         const lockedZoneConfigs = [
-            { x: width * 0.02, y: height * 0.04, w: width * 0.25, h: height * 0.42, msg: lockedMessages[0] },
-            { x: width * 0.68, y: height * 0.04, w: width * 0.25, h: height * 0.42, msg: lockedMessages[1] },
-            { x: width * 0.02, y: height * 0.53, w: width * 0.25, h: height * 0.42, msg: lockedMessages[2] },
-            { x: width * 0.68, y: height * 0.53, w: width * 0.25, h: height * 0.42, msg: lockedMessages[3] },
+            // top-left table
+            { x: width * 0.07, y: height * 0.14, w: width * 0.22, h: height * 0.30,
+              msg: "👻 The ghost dealer isn't at this table right now!" },
+            // top-right table
+            { x: width * 0.70, y: height * 0.14, w: width * 0.22, h: height * 0.30,
+              msg: "🦇 The bats have claimed this table for the night!" },
+            // bottom-left table
+            { x: width * 0.04, y: height * 0.58, w: width * 0.20, h: height * 0.36,
+              msg: "🕸️ This table is tangled in cobwebs — come back never!" },
+            // bottom mid-left table
+            { x: width * 0.27, y: height * 0.58, w: width * 0.17, h: height * 0.36,
+              msg: "☠️ The skeleton croupier called in sick. Table closed!" },
+            // bottom mid-right table
+            { x: width * 0.56, y: height * 0.58, w: width * 0.17, h: height * 0.36,
+              msg: "🔮 The crystal ball says: not tonight." },
+            // bottom-right table
+            { x: width * 0.76, y: height * 0.58, w: width * 0.20, h: height * 0.36,
+              msg: "🪦 Reserved for the recently deceased — keep moving!" },
         ];
 
         const lockedZones = lockedZoneConfigs.map(cfg => ({

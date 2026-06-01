@@ -85,6 +85,26 @@ class BlackjackGameManager {
         gameContainer.appendChild(instructions);
         this.overlay.appendChild(this.createParallaxBackground());
         this.overlay.appendChild(gameContainer);
+
+        // Persistent Help button — pinned to the top-right of the screen, visible
+        // at all times (during betting and during play). z-index sits above the
+        // game UI but below the help modal (20000) so the modal still covers it.
+        const helpFab = document.createElement('button');
+        helpFab.id = 'bj-help-fab';
+        helpFab.innerHTML = '❓ How to Play';
+        helpFab.style.cssText = `
+            position: fixed; top: 18px; right: 18px;
+            z-index: 10001;
+            background: #3d0066; color: #cc99ff;
+            border: 1px solid #6b0ac9; border-radius: 8px;
+            padding: 9px 16px; font-size: 14px; font-weight: bold;
+            cursor: pointer; box-shadow: 0 0 14px rgba(107,10,201,0.5);
+            transition: transform 0.1s;
+        `;
+        helpFab.addEventListener('mouseenter', () => { helpFab.style.transform = 'scale(1.06)'; });
+        helpFab.addEventListener('mouseleave', () => { helpFab.style.transform = 'none'; });
+        this.overlay.appendChild(helpFab);
+
         document.body.appendChild(this.overlay);
 
 
@@ -98,16 +118,16 @@ class BlackjackGameManager {
         style.id = 'bj-parallax-style';
         style.textContent = `
             @keyframes bjDrift0 {
-                0%   { transform: translateY(110vh) translateX(0px)   rotate(0deg);   }
-                100% { transform: translateY(-10vh)  translateX(30px)  rotate(360deg); }
+                0%   { transform: translateY(10vh)   translateX(0px)   rotate(0deg);   }
+                100% { transform: translateY(-110vh) translateX(30px)  rotate(360deg); }
             }
             @keyframes bjDrift1 {
-                0%   { transform: translateY(110vh) translateX(0px)   rotate(0deg);    }
-                100% { transform: translateY(-10vh)  translateX(-20px) rotate(-240deg); }
+                0%   { transform: translateY(10vh)   translateX(0px)   rotate(0deg);    }
+                100% { transform: translateY(-110vh) translateX(-20px) rotate(-240deg); }
             }
             @keyframes bjDrift2 {
-                0%   { transform: translateY(110vh) translateX(0px)  rotate(0deg);   }
-                100% { transform: translateY(-10vh)  translateX(15px) rotate(180deg); }
+                0%   { transform: translateY(10vh)   translateX(0px)  rotate(0deg);   }
+                100% { transform: translateY(-110vh) translateX(15px) rotate(180deg); }
             }
         `;
         document.head.appendChild(style);
@@ -305,14 +325,10 @@ class BlackjackGameManager {
                 background:linear-gradient(135deg,#180030,#300010);
                 padding:18px; border-radius:8px; margin-bottom:16px;
                 text-align:center; border:1px solid #6b0ac9;">
-                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+                <div style="display:flex;justify-content:center;align-items:center;margin-bottom:14px;">
                     <span style="color:#e0c0ff;font-weight:bold;font-size:17px;text-shadow:0 0 8px #6b0ac9;">
                         🕷️ Choose Your Bet
                     </span>
-                    <button id="bj-help-open-bet" class="bj-btn"
-                        style="background:#3d0066;color:#cc99ff;border:1px solid #6b0ac9;padding:7px 14px;font-size:13px;">
-                        ❓ How to Play
-                    </button>
                 </div>
                 <div style="display:flex; gap:8px; justify-content:center; flex-wrap:wrap;">
                     <button class="bet-btn bj-btn" data-bet="100"  style="background:#3d0066;color:#cc99ff;">$100</button>
@@ -403,7 +419,6 @@ class BlackjackGameManager {
                     <button id="bj-redeem" class="bj-btn" style="background:#ff8f1f;color:#1b0f00;">Redeem 🩹</button>
                     <button id="bj-risk"   class="bj-btn" style="background:#c40000;color:white;">Risk ⚡</button>
                     <button id="bj-newbet" class="bj-btn" style="background:#003344;color:#99ccff;display:none;">New Bet 🎲</button>
-                    <button id="bj-help-open-game" class="bj-btn" style="background:#3d0066;color:#cc99ff;border:1px solid #6b0ac9;">❓ Help</button>
                     <button id="bj-exit"   class="bj-btn" style="background:#330000;color:#ff6666;">Exit Casino 🚪</button>
                 </div>
 
@@ -446,8 +461,7 @@ class BlackjackGameManager {
 
 
             const helpModal     = document.getElementById('bj-help-modal');
-            const helpOpenBet   = document.getElementById('bj-help-open-bet');
-            const helpOpenGame  = document.getElementById('bj-help-open-game');
+            const helpFab       = document.getElementById('bj-help-fab');
             const helpClose     = document.getElementById('bj-help-close');
 
 
@@ -455,8 +469,7 @@ class BlackjackGameManager {
             const closeHelp = () => { helpModal.style.display = 'none'; };
 
 
-            helpOpenBet.addEventListener ('click', openHelp);
-            helpOpenGame.addEventListener('click', openHelp);
+            if (helpFab) helpFab.addEventListener('click', openHelp);
             helpClose.addEventListener   ('click', closeHelp);
             // Click outside the card to close
             helpModal.addEventListener('click', (e) => { if (e.target === helpModal) closeHelp(); });
@@ -663,7 +676,10 @@ class BlackjackGameManager {
 
             // ── Insurance ─────────────────────────────────────────────────────
             const offerInsurance = () => {
-                const max = Math.floor(bets[0] / 2);
+                const max = Math.min(Math.floor(bets[0] / 2), this.money);
+                // If the player went all-in (or can't cover any insurance), skip the
+                // offer and resolve as if they declined — never let money go negative.
+                if (max <= 0) { resolveInsurance(false); return; }
                 insMax.textContent      = max;
                 insAmountEl.textContent = max;
                 insDialog.style.display = 'block';
@@ -678,7 +694,7 @@ class BlackjackGameManager {
 
 
                 if (buy) {
-                    insuranceBet = Math.floor(bets[0] / 2);
+                    insuranceBet = Math.min(Math.floor(bets[0] / 2), this.money);
                     this.money  -= insuranceBet;
                     this.updateMoneyDisplay();
                     betDisplay.textContent = `Current Bet: $${bets[0]} (+$${insuranceBet} insurance)`;
