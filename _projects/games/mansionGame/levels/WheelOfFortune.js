@@ -1,13 +1,14 @@
 class WheelOfFortuneGameManager {
     constructor(gameEnv, options = {}) {
         this.gameEnv = gameEnv;
-        this.phrase = (options.phrase || "SECRET PASSAGE").toUpperCase();
+        this.phraseBank = this.normalizePhraseBank(options.phraseBank);
+        this.phrase = this.normalizePhrase(options.phrase || this.pickPhraseFromBank(this.phraseBank));
         this.category = options.category || "Mansion Mystery";
         this.onWin = options.onWin || (() => {});
         this.overlay = null;
         this.gameActive = false;
         this.coins = 500;
-        this.vowelCost = 250;
+        this.vowelCost = 200;
         this.currentSpinValue = null;
         this.guessedLetters = new Set();
         this.solved = false;
@@ -66,7 +67,12 @@ class WheelOfFortuneGameManager {
                             <div style="background: #211a29; border-radius: 6px; padding: 10px 14px;">Vowels: <strong>$250</strong></div>
                         </div>
 
-                        <div id="wheel-puzzle" style="display: flex; flex-wrap: wrap; gap: 8px; min-height: 78px; padding: 16px; margin-bottom: 14px; background: #0f2f29; border: 3px solid #58a572; border-radius: 8px;"></div>
+                        <div id="wheel-puzzle" style="display: flex; flex-direction: column; align-items: center; gap: 12px; min-height: 120px; padding: 16px; margin-bottom: 14px; background: #0f2f29; border: 3px solid #58a572; border-radius: 8px;"></div>
+
+                        <div style="background: #211a29; border-radius: 8px; padding: 10px 14px; margin-bottom: 14px;">
+                            <div style="margin-bottom: 6px; font-weight: 700; font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; color: #a89bbf;">Used Letters</div>
+                            <div id="wheel-used-letters" style="display: flex; flex-wrap: wrap; gap: 5px;"></div>
+                        </div>
 
                         <div id="wheel-message" style="min-height: 44px; margin-bottom: 14px; color: #f2d98b; font-size: 16px; line-height: 1.4;"></div>
 
@@ -95,6 +101,7 @@ class WheelOfFortuneGameManager {
                                 <button id="wheel-solve-btn" style="padding: 12px 18px; border: 0; border-radius: 6px; background: #58a572; color: #06120b; font-weight: 900; cursor: pointer;">Solve</button>
                             </div>
                         </div>
+
                     </div>
                 </div>
             </div>
@@ -206,7 +213,7 @@ class WheelOfFortuneGameManager {
 
         this.solved = true;
         this.revealPhrase();
-        this.setMessage("Correct. The hidden key is yours.");
+        this.setMessage(`Correct. ${this.phrase} is yours.`);
         setTimeout(() => {
             this.close();
             this.onWin();
@@ -254,26 +261,61 @@ class WheelOfFortuneGameManager {
         const puzzle = this.overlay.querySelector("#wheel-puzzle");
         puzzle.innerHTML = "";
 
-        for (const character of this.phrase) {
-            const tile = document.createElement("span");
-            tile.style.cssText = `
-                width: 38px;
-                height: 46px;
-                display: grid;
-                place-items: center;
-                border-radius: 4px;
-                background: ${character === " " ? "transparent" : "#f4ead1"};
-                color: #16120b;
-                font-size: 24px;
-                font-weight: 900;
+        for (const word of this.phrase.split(" ")) {
+            const wordRow = document.createElement("div");
+            wordRow.style.cssText = `
+                display: flex;
+                justify-content: center;
+                gap: 8px;
+                flex-wrap: wrap;
+                width: 100%;
             `;
-            tile.textContent = character === " " ? "" : (this.guessedLetters.has(character) ? character : "");
-            puzzle.appendChild(tile);
+
+            for (const character of word) {
+                const tile = document.createElement("span");
+                tile.style.cssText = `
+                    width: 38px;
+                    height: 46px;
+                    display: grid;
+                    place-items: center;
+                    border-radius: 4px;
+                    background: #f4ead1;
+                    color: #16120b;
+                    font-size: 24px;
+                    font-weight: 900;
+                `;
+                tile.textContent = this.guessedLetters.has(character) ? character : "";
+                wordRow.appendChild(tile);
+            }
+
+            puzzle.appendChild(wordRow);
         }
 
         const consonantButton = this.overlay.querySelector("#wheel-consonant-btn");
         consonantButton.disabled = !this.currentSpinValue;
         consonantButton.style.opacity = this.currentSpinValue ? "1" : "0.55";
+
+        const usedLettersContainer = this.overlay.querySelector("#wheel-used-letters");
+        usedLettersContainer.innerHTML = "";
+        for (const letter of "ABCDEFGHIJKLMNOPQRSTUVWXYZ") {
+            const chip = document.createElement("span");
+            chip.textContent = letter;
+            const isVowel = /[AEIOU]/.test(letter);
+            const wasGuessed = this.guessedLetters.has(letter);
+            const isInPhrase = [...this.phrase].includes(letter);
+
+            let bg, color, border;
+            if (!wasGuessed) {
+                bg = "#2e2740"; color = "#7a6f8a"; border = "1px solid #3e3554";
+            } else if (isInPhrase) {
+                bg = isVowel ? "#4a2b7a" : "#1a4a6a"; color = "#e8d5ff"; border = `1px solid ${isVowel ? "#8c63c7" : "#5387d6"}`;
+            } else {
+                bg = "#3a1a1a"; color = "#7a4444"; border = "1px solid #5a2a2a";
+            }
+
+            chip.style.cssText = `display:inline-block;width:26px;height:26px;line-height:26px;text-align:center;border-radius:4px;font-size:13px;font-weight:700;background:${bg};color:${color};border:${border};`;
+            usedLettersContainer.appendChild(chip);
+        }
     }
 
     setMessage(message) {
@@ -287,6 +329,28 @@ class WheelOfFortuneGameManager {
 
     normalizePhrase(value) {
         return String(value || "").trim().replace(/\s+/g, " ").toUpperCase();
+    }
+
+    normalizePhraseBank(phrases) {
+        const fallbackPhrases = [
+            "SECRET PASSAGE",
+            "HIDDEN STAIRCASE",
+            "MIRROR CHAMBER",
+            "BENEATH THE STAIRS",
+            "LOCKED PANEL",
+            "DUSTY ARCHWAY"
+        ];
+        const source = Array.isArray(phrases) && phrases.length ? phrases : fallbackPhrases;
+
+        return source.map((phrase) => this.normalizePhrase(phrase)).filter(Boolean);
+    }
+
+    pickPhraseFromBank(phrases) {
+        if (!phrases.length) {
+            return "SECRET PASSAGE";
+        }
+
+        return phrases[Math.floor(Math.random() * phrases.length)];
     }
 
     isVowel(letter) {
