@@ -8,6 +8,10 @@ class TriggerZone extends GameObject {
         this.y = data.y;
         this.width = data.width;
         this.height = data.height;
+        this.scale = {
+            width: gameEnv?.innerWidth || 1,
+            height: gameEnv?.innerHeight || 1
+        };
         this.color = data.color || 'rgba(255, 215, 0, 0.3)';
         this.visible = data.visible !== undefined ? data.visible : true;
         this.triggered = false;
@@ -37,8 +41,18 @@ class TriggerZone extends GameObject {
     }
 
     resize() {
-        // Trigger zones are positioned relative to canvas size
-        // Resizing handled by level reconstruction
+        if (!this.gameEnv) return;
+
+        const newScale = {
+            width: this.gameEnv.innerWidth || this.scale.width || 1,
+            height: this.gameEnv.innerHeight || this.scale.height || 1
+        };
+
+        this.x = (this.x / this.scale.width) * newScale.width;
+        this.y = (this.y / this.scale.height) * newScale.height;
+        this.width = (this.width / this.scale.width) * newScale.width;
+        this.height = (this.height / this.scale.height) * newScale.height;
+        this.scale = newScale;
     }
 
     destroy() {

@@ -125,12 +125,13 @@ class MansionLevel3 {
         ];
 
         // OPEN table — the spotlit, highlighted table in the TOP-MIDDLE of the
-        // casino sprite (image_lvl4.png). Measured footprint: x≈0.38–0.60, y≈0.05–0.42.
+        // casino sprite (image_lvl4.png). Tighten the zone so the prompt only
+        // appears when the player is actually standing at the lit table.
         const mainZoneData = {
-            x: width * 0.37,
-            y: height * 0.04,
-            width: width * 0.26,
-            height: height * 0.40,
+            x: width * 0.43,
+            y: height * 0.11,
+            width: width * 0.18,
+            height: height * 0.32,
             color: 'rgba(107, 10, 201, 0.12)',
             visible: false,
             onEnter: () => {
@@ -437,14 +438,16 @@ class MansionLevel3 {
         this.mainPromptEl.id = 'casino-prompt-l3';
         this.mainPromptEl.style.cssText = `
             position: fixed;
-            top: 50%; left: 50%;
-            transform: translate(-50%, -50%);
+            top: 18px;
+            left: 50%;
+            transform: translateX(-50%);
             background: rgba(5, 0, 18, 0.95);
             border: 3px solid ${HEX.purple};
             border-radius: 15px;
-            padding: 30px 50px;
+            padding: 18px 28px;
             z-index: 9999;
             text-align: center;
+            width: min(520px, calc(100% - 32px));
             animation: l3BorderCycle 3s infinite;
         `;
 
@@ -457,20 +460,20 @@ class MansionLevel3 {
                     100% { box-shadow: 0 0 30px ${HEX.purple}, 0 0 60px rgba(107,10,201,0.35); border-color: ${HEX.purple}; }
                 }
             </style>
-            <div style="font-size:52px; margin-bottom:12px;">🎰</div>
-            <h2 style="color:${HEX.purple}; font-size:30px; margin:0 0 12px 0;
+            <div style="font-size:42px; margin-bottom:8px;">🎰</div>
+            <h2 style="color:${HEX.purple}; font-size:26px; margin:0 0 10px 0;
                        text-shadow:0 0 12px ${HEX.purple};">HAUNTED BLACKJACK</h2>
-            <p style="color:${HEX.ghostWhite}; font-size:18px; margin:8px 0;">
+            <p style="color:${HEX.ghostWhite}; font-size:16px; margin:6px 0;">
                 Win <strong style="color:${HEX.green};">$10,000</strong> to escape the cursed casino!
             </p>
-            <p style="color:#aaa; font-size:14px; margin:4px 0;">
+            <p style="color:#aaa; font-size:13px; margin:4px 0;">
                 Split • Double Down • Insurance • Natural BJ pays 3:2
             </p>
-            <div style="margin-top:22px; padding:14px 20px;
+            <div style="margin-top:14px; padding:12px 18px;
                         background: linear-gradient(135deg, ${HEX.purple}, ${HEX.blood});
                         border-radius:10px;">
-                <p style="color:white; font-size:22px; margin:0; font-weight:bold;">
-                    Press <kbd style="background:#000;border:1px solid #fff;padding:2px 8px;border-radius:4px;">E</kbd> to Enter
+                <p style="color:white; font-size:18px; margin:0; font-weight:bold;">
+                    Press <kbd style="background:#000;border:1px solid #fff;padding:2px 8px;border-radius:4px;">E</kbd> to open the table
                 </p>
             </div>
         `;
